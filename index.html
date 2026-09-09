@@ -1,113 +1,865 @@
-<div class="filtros-container">
-    <div class="filtros-header">FILTROS DE CAMPO</div>
-    <div class="filtros-inputs-row">
-        <!-- Campo de búsqueda por ítem o descripción -->
-        <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="filtroItem" placeholder="Buscar Ítem..." onkeyup="filtrarTabla()">
-        </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planilla App</title>
+    <!-- Estilos y FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1e4620;
+            --primary-dark: #122d14;
+            --accent-color: #2e7d32;
+            --light-bg: #f4f6f5;
+            --success-color: #d4edda;
+            --border-color: #ccc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: var(--light-bg); color: #333; }
         
-        <!-- Selector desplegable de Estación -->
-        <div class="select-box">
-            <select id="filtroEstacion" onchange="filtrarTabla()">
-                <option value="">Estación</option>
-                <!-- Aquí puedes poblar dinámicamente o dejar las opciones -->
-                <option value="EPP 01-1">EPP 01-1</option>
-            </select>
+        /* Contenedores de Vistas */
+        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 80px;}
+        .view.active { display: block; }
+
+        /* Encabezados */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        header h1 { font-size: 1.2rem; }
+        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+
+        /* Buscadores y Filtros Generales */
+        .search-box-general {
+            position: relative;
+            margin: 15px 0;
+        }
+        .search-box-general input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+        .search-box-general i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+        }
+
+        /* FILTROS DE CAMPO (Exacto como tu diseño) */
+        .filtros-container {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+        .filtros-header {
+            font-weight: bold;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .filtros-inputs-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .search-box-item {
+            flex: 2;
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 6px 10px;
+        }
+        .search-box-item input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 13px;
+            color: #495057;
+            background: transparent;
+        }
+        .select-box-estacion {
+            flex: 1.2;
+        }
+        .select-box-estacion select {
+            width: 100%;
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 7px 8px;
+            font-size: 13px;
+            color: #333;
+            outline: none;
+            cursor: pointer;
+        }
+        .date-box-filter {
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Tarjetas de Obras */
+        .obra-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--accent-color);
+        }
+        .obra-info { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
+        .obra-actions { display: flex; gap: 12px; }
+        .obra-actions button { background: none; border: none; font-size: 1.1rem; cursor: pointer; }
+        .btn-edit { color: #2e7d32; }
+        .btn-export { color: #0277bd; }
+        .btn-delete { color: #c62828; }
+
+        /* Botón Flotante (FAB) */
+        .fab-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        .fab {
+            background-color: var(--accent-color);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* Menú Desplegable FAB */
+        .fab-menu {
+            display: none;
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            width: 220px;
+            overflow: hidden;
+        }
+        .fab-menu.show { display: block; }
+        .fab-menu button {
+            width: 100%;
+            padding: 12px 15px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .fab-menu button:hover { background-color: #f1f1f1; }
+
+        /* Tablas y Contenedor Deslizable */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+            font-size: 0.85rem;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background-color: var(--primary-color); color: white; }
+
+        /* Celda destacada de 3 cifras en verde */
+        .highlight-green {
+            background-color: var(--success-color) !important;
+        }
+
+        /* Paneles de Datos Generales */
+        .general-data {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        .general-data p { margin: 4px 0; }
+
+        /* Modales / Formularios Flotantes */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+        .btn-cancel { background-color: #ccc; color: #333; }
+        .btn-save { background-color: var(--accent-color); color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- VISTA 1: VENTANA PRINCIPAL -->
+    <div id="main-view" class="view active">
+        <header>
+            <h1>PLANILLA APP</h1>
+            <i class="fa-solid fa-bolt"></i>
+        </header>
+
+        <div class="search-box-general">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-obra" placeholder="Buscar Obra..." onkeyup="filtrarObras()">
         </div>
 
-        <!-- Botón de Calendario / Filtro por Fecha -->
-        <div class="date-box" onclick="abrirFiltroFecha()" title="Filtrar por fecha">
-            <svg class="calendar-icon" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-                <rect x="7" y="14" width="3" height="3" fill="currentColor"></rect>
-                <rect x="14" y="14" width="3" height="3" fill="currentColor"></rect>
-            </svg>
+        <div id="lista-obras"></div>
+
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <button onclick="abrirVistaItems()"><i class="fa-solid fa-list"></i> 1- Lista de Ítems</button>
+                <button onclick="abrirModalObra()"><i class="fa-solid fa-plus-circle"></i> 2- Crear Obra</button>
+            </div>
+            <button class="fab" onclick="toggleFabMenu()"><i class="fa-solid fa-plus" id="fab-icon"></i></button>
         </div>
     </div>
-</div>
 
-<style>
-.filtros-container {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-    font-family: Arial, sans-serif;
-}
+    <!-- VISTA 2: VENTANA DE PLANILLA / REGISTRO DE OPERACIÓN -->
+    <div id="planilla-view" class="view">
+        <header>
+            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 id="titulo-planilla">REGISTRO DE OPERACION</h1>
+            <div></div>
+        </header>
 
-.filtros-header {
-    font-weight: bold;
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
-}
+        <div class="general-data" id="info-general-obra"></div>
 
-.filtros-inputs-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
+        <!-- SECCIÓN DE FILTROS DE CAMPO (Tal cual lo diseñaste) -->
+        <div class="filtros-container">
+            <div class="filtros-header">FILTROS DE CAMPO</div>
+            <div class="filtros-inputs-row">
+                <div class="search-box-item">
+                    <i class="fa-solid fa-magnifying-glass" style="color: #777; margin-right: 6px; font-size: 12px;"></i>
+                    <input type="text" id="filtro-item-input" placeholder="Buscar Ítem..." onkeyup="renderizarRegistros()">
+                </div>
+                <div class="select-box-estacion">
+                    <select id="filtro-estacion-select" onchange="renderizarRegistros()">
+                        <option value="">Estación</option>
+                    </select>
+                </div>
+                <div class="date-box-filter" onclick="limpiarFiltroFecha()" title="Filtrar por Fecha">
+                    <i class="fa-solid fa-calendar-days" style="color: #333;"></i>
+                </div>
+            </div>
+        </div>
 
-.search-box {
-    flex: 2;
-    display: flex;
-    align-items: center;
-    background: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    padding: 6px 10px;
-}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estación</th>
+                        <th>Ítems</th>
+                        <th>Descripción</th>
+                        <th>Cant.</th>
+                        <th>Fecha Descargo</th>
+                        <th>Series / Obs</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-registros-body"></tbody>
+            </table>
+        </div>
 
-.search-box input {
-    border: none;
-    outline: none;
-    width: 100%;
-    font-size: 14px;
-    color: #495057;
-    background: transparent;
-}
+        <div class="fab-container">
+            <button class="fab" onclick="abrirModalRegistro()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+    </div>
 
-.search-icon {
-    margin-right: 6px;
-    font-size: 14px;
-}
+    <!-- VISTA 3: VENTANA DE ÍTEMS -->
+    <div id="items-view" class="view">
+        <header>
+            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1>LISTA DE ÍTEMS</h1>
+            <div></div>
+        </header>
 
-.select-box {
-    flex: 1.2;
-}
+        <div class="search-box-general">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-item-master" placeholder="Buscar ítem o descripción..." onkeyup="filtrarItemsMaster()">
+        </div>
 
-.select-box select {
-    width: 100%;
-    background: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    padding: 7px 10px;
-    font-size: 14px;
-    color: #333;
-    outline: none;
-    cursor: pointer;
-}
+        <div class="table-container" style="margin-top: 15px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ítem</th>
+                        <th>Descripción</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-items-master"></tbody>
+            </table>
+        </div>
 
-.date-box {
-    background: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    padding: 6px 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #333;
-    transition: background 0.2s;
-}
+        <div class="fab-container">
+            <button class="fab" onclick="abrirModalItemMaster()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+    </div>
 
-.date-box:hover {
-    background: #f1f3f5;
-}
-</style>
+    <!-- MODAL: NUEVA / EDITAR OBRA -->
+    <div class="modal" id="modal-obra">
+        <div class="modal-content">
+            <h3 id="modal-obra-title" style="margin-bottom: 15px;">Nueva Obra</h3>
+            <input type="hidden" id="obra-id-edit">
+            <div class="form-group">
+                <label>Proyecto*</label>
+                <input type="text" id="input-proyecto" placeholder="Ej: HIS_AV659">
+            </div>
+            <div class="form-group">
+                <label>Circuito</label>
+                <input type="text" id="input-circuito" placeholder="Ej: SAN SEBASTIAN">
+            </div>
+            <div class="form-group">
+                <label>Zona</label>
+                <select id="input-zona">
+                    <option value="Urbano">Urbano</option>
+                    <option value="Rural">Rural</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalObra()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarObra()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVO / EDITAR REGISTRO -->
+    <div class="modal" id="modal-registro">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Nuevo Registro</h3>
+            <input type="hidden" id="reg-id-edit">
+            <div class="form-group">
+                <label>Estación*</label>
+                <input type="text" id="reg-estacion" placeholder="Ej: EPP 01-1">
+            </div>
+            <div class="form-group">
+                <label>Ítem*</label>
+                <input type="text" id="reg-item" placeholder="Ej: 80 o 1465239" oninput="autocompletarDescripcion(this.value)">
+            </div>
+            <div class="form-group">
+                <label>Descripción (Automática o Manual)</label>
+                <textarea id="reg-descripcion" rows="2" placeholder="Descripción del material o labor"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Cantidad*</label>
+                <input type="number" id="reg-cantidad" value="1">
+            </div>
+            <div class="form-group">
+                <label>Fecha de Descargo*</label>
+                <input type="date" id="reg-fecha">
+            </div>
+            <div class="form-group">
+                <label>N. Descargo</label>
+                <input type="text" id="reg-ndescargo" placeholder="Número de descargo">
+            </div>
+            <div class="form-group">
+                <label>Serie</label>
+                <input type="text" id="reg-serie" placeholder="Serial del equipo (si aplica)">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalRegistro()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarRegistro()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVO / EDITAR ITEM MAESTRO -->
+    <div class="modal" id="modal-item-master">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Gestión de Ítem</h3>
+            <input type="hidden" id="item-original-id">
+            <div class="form-group">
+                <label>Código de Ítem*</label>
+                <input type="text" id="master-item-code" placeholder="Ej: 80">
+            </div>
+            <div class="form-group">
+                <label>Descripción*</label>
+                <textarea id="master-item-desc" rows="3" placeholder="Descripción detallada..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalItemMaster()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarItemMaster()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let obras = JSON.parse(localStorage.getItem('planilla_obras')) || [
+            { id: 1, proyecto: 'HIS_AV659', circuito: 'SAN SEBASTIAN', zona: 'Urbano', ultimaMod: Date.now() - 1000 },
+            { id: 2, proyecto: 'HIS_K7907', circuito: 'N/A', zona: 'Rural', ultimaMod: Date.now() - 50000 }
+        ];
+
+        let registros = JSON.parse(localStorage.getItem('planilla_registros')) || {
+            1: [
+                { id: 101, estacion: 'EPP 01-1', item: '80', descripcion: 'Colocación de poste de concreto de 12m o 14m', cantidad: 1, fecha: '2026-05-10', ndescargo: '123', serie: '' },
+                { id: 102, estacion: 'EPP 01-1', item: '1465239', descripcion: 'POSTE DE HPC/HPV DE 12M x 1030 daN (CR)', cantidad: 1, fecha: '2026-05-10', ndescargo: '124', serie: 'ABC99' }
+            ]
+        };
+
+        let itemsMaster = JSON.parse(localStorage.getItem('planilla_items_master')) || [
+            { item: '1', desc: 'Inspección Servicio Medida Directa' },
+            { item: '2', desc: 'Instalación completa del suministro (Medida directa)' },
+            { item: '3', desc: 'Instalación completa del suministro (Medida Tecnificada)' },
+            { item: '4', desc: 'Instalación completa de medidor bicuerpo en caja de policarbonato' },
+            { item: '5', desc: 'Instalación completa de medidor bicuerpo en gabinete' },
+            { item: '6', desc: 'Instalación completa redes inteligentes en Poste/Vano – Cable RS 485' },
+            { item: '7', desc: 'Instalación de Concentrador Secundario o Esclava en cruceta CableRS485' },
+            { item: '8', desc: 'Instalación de medidor y adecuación de caja y acometida' },
+            { item: '9', desc: 'Instalación de acometida y adecuación de caja y medidor' },
+            { item: '10', desc: 'Instalación de caja y adecuación de acometida y medidor' },
+            { item: '11', desc: 'Inst caja(gabinete)medidores concentrados(1F,trifil, 3F)config bandera' },
+            { item: '12', desc: 'Instalación de display y caja polimérica' },
+            { item: '13', desc: 'Instalación y suministro de terminales bimetálicos deconexión caja' },
+            { item: '14', desc: 'Instalación de acometida para totalizador de gabinete multifamiliar' },
+            { item: '15', desc: 'Instalación de gabinete en multifamiliares' },
+            { item: '16', desc: 'Instalación o cambio de acometida' },
+            { item: '17', desc: 'Instalación o cambio de acometida y caja' },
+            { item: '18', desc: 'Instalación o cambio de acometida y medidor' },
+            { item: '19', desc: 'Adecuación de acometida' },
+            { item: '20', desc: 'Adecuación de Caja y Acometida' },
+            { item: '80', desc: 'Colocación de poste de concreto de 12m o 14m' },
+            { item: '1465239', desc: 'POSTE DE HPC/HPV DE 12M x 1030 daN (CR)' }
+        ];
+
+        let obraActualId = null;
+
+        function guardarDatosLocal() {
+            localStorage.setItem('planilla_obras', JSON.stringify(obras));
+            localStorage.setItem('planilla_registros', JSON.stringify(registros));
+            localStorage.setItem('planilla_items_master', JSON.stringify(itemsMaster));
+        }
+
+        function cambiarVista(vistaId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(vistaId).classList.add('active');
+            cerrarFabMenu();
+        }
+
+        function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
+        function cerrarFabMenu() { document.getElementById('fab-menu').classList.remove('show'); }
+        function volverPrincipal() { cambiarVista('main-view'); renderizarObras(); }
+        function abrirVistaItems() { cambiarVista('items-view'); renderizarItemsMaster(); }
+
+        function renderizarObras(filtro = '') {
+            const contenedor = document.getElementById('lista-obras');
+            contenedor.innerHTML = '';
+            let obrasOrdenadas = [...obras].sort((a, b) => b.ultimaMod - a.ultimaMod);
+            let filtradas = obrasOrdenadas.filter(o => o.proyecto.toLowerCase().includes(filtro.toLowerCase()));
+
+            if (filtradas.length === 0) {
+                contenedor.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">No hay obras encontradas.</p>';
+                return;
+            }
+
+            filtradas.forEach(obra => {
+                const card = document.createElement('div');
+                card.className = 'obra-card';
+                card.innerHTML = `
+                    <div class="obra-info" onclick="abrirPlanilla(${obra.id})">
+                        <i class="fa-regular fa-folder-open" style="font-size: 1.2rem; color: var(--accent-color);"></i>
+                        <div>
+                            <strong>${obra.proyecto}</strong>
+                            <div style="font-size: 0.8rem; color: #666;">${obra.circuito || 'Sin circuito'} (${obra.zona})</div>
+                        </div>
+                    </div>
+                    <div class="obra-actions">
+                        <button class="btn-edit" onclick="editarObra(${obra.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-export" onclick="exportarExcel(${obra.id})"><i class="fa-solid fa-file-excel"></i></button>
+                        <button class="btn-delete" onclick="eliminarObra(${obra.id})"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+        }
+
+        function filtrarObras() { renderizarObras(document.getElementById('search-obra').value); }
+
+        function abrirModalObra(id = null) {
+            document.getElementById('modal-obra').classList.add('show');
+            if (id) {
+                document.getElementById('modal-obra-title').innerText = 'Editar Obra';
+                let obra = obras.find(o => o.id === id);
+                document.getElementById('obra-id-edit').value = obra.id;
+                document.getElementById('input-proyecto').value = obra.proyecto;
+                document.getElementById('input-circuito').value = obra.circuito;
+                document.getElementById('input-zona').value = obra.zona;
+            } else {
+                document.getElementById('modal-obra-title').innerText = 'Nueva Obra';
+                document.getElementById('obra-id-edit').value = '';
+                document.getElementById('input-proyecto').value = '';
+                document.getElementById('input-circuito').value = '';
+                document.getElementById('input-zona').value = 'Urbano';
+            }
+        }
+
+        function cerrarModalObra() { document.getElementById('modal-obra').classList.remove('show'); }
+
+        function guardarObra() {
+            let id = document.getElementById('obra-id-edit').value;
+            let proyecto = document.getElementById('input-proyecto').value.trim();
+            let circuito = document.getElementById('input-circuito').value.trim();
+            let zona = document.getElementById('input-zona').value;
+
+            if (!proyecto) { alert('El campo Proyecto es obligatorio'); return; }
+
+            if (id) {
+                let obra = obras.find(o => o.id == id);
+                obra.proyecto = proyecto;
+                obra.circuito = circuito;
+                obra.zona = zona;
+                obra.ultimaMod = Date.now();
+            } else {
+                let nuevaId = Date.now();
+                obras.push({ id: nuevaId, proyecto, circuito, zona, ultimaMod: Date.now() });
+                registros[nuevaId] = [];
+            }
+            guardarDatosLocal();
+            cerrarModalObra();
+            renderizarObras();
+        }
+
+        function editarObra(id) { abrirModalObra(id); }
+
+        function eliminarObra(id) {
+            if (confirm('¿Desea eliminar esta obra y todos sus registros?')) {
+                obras = obras.filter(o => o.id !== id);
+                delete registros[id];
+                guardarDatosLocal();
+                renderizarObras();
+            }
+        }
+
+        function abrirPlanilla(id) {
+            obraActualId = id;
+            let obra = obras.find(o => o.id === id);
+            obra.ultimaMod = Date.now();
+            guardarDatosLocal();
+
+            document.getElementById('titulo-planilla').innerText = obra.proyecto;
+            document.getElementById('info-general-obra').innerHTML = `
+                <p><strong>Proyecto:</strong> ${obra.proyecto}</p>
+                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Zona:</strong> ${obra.zona}</p>
+            `;
+            cambiarVista('planilla-view');
+            actualizarSelectEstaciones();
+            renderizarRegistros();
+        }
+
+        function actualizarSelectEstaciones() {
+            let select = document.getElementById('filtro-estacion-select');
+            let lista = registros[obraActualId] || [];
+            let estacionesUnicas = [...new Set(lista.map(r => r.estacion))];
+            
+            select.innerHTML = '<option value="">Estación</option>';
+            estacionesUnicas.forEach(est => {
+                select.innerHTML += `<option value="${est}">${est}</option>`;
+            });
+        }
+
+        function renderizarRegistros() {
+            let tbody = document.getElementById('tabla-registros-body');
+            tbody.innerHTML = '';
+            let lista = registros[obraActualId] || [];
+
+            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase();
+            let filtroEstacion = document.getElementById('filtro-estacion-select').value;
+
+            let filtrados = lista.filter(r => {
+                let matchItem = r.item.toLowerCase().includes(filtroItem) || r.descripcion.toLowerCase().includes(filtroItem);
+                let matchEstacion = filtroEstacion === "" || r.estacion === filtroEstacion;
+                return matchItem && matchEstacion;
+            });
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777;">No hay registros cargados.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach((reg) => {
+                let esTresCifras = reg.item.trim().length === 3;
+                let claseVerde = esTresCifras ? 'highlight-green' : '';
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${reg.estacion}</td>
+                    <td class="${claseVerde}"><strong>${reg.item}</strong></td>
+                    <td>${reg.descripcion}</td>
+                    <td>${reg.cantidad}</td>
+                    <td>${reg.fecha}</td>
+                    <td>${reg.serie || reg.ndescargo || ''}</td>
+                    <td>
+                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:8px;"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function limpiarFiltroFecha() {
+            document.getElementById('filtro-item-input').value = '';
+            document.getElementById('filtro-estacion-select').value = '';
+            renderizarRegistros();
+        }
+
+        function abrirModalRegistro(id = null) {
+            document.getElementById('modal-registro').classList.add('show');
+            document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
+            if (id) {
+                let reg = registros[obraActualId].find(r => r.id === id);
+                document.getElementById('reg-id-edit').value = reg.id;
+                document.getElementById('reg-estacion').value = reg.estacion;
+                document.getElementById('reg-item').value = reg.item;
+                document.getElementById('reg-descripcion').value = reg.descripcion;
+                document.getElementById('reg-cantidad').value = reg.cantidad;
+                document.getElementById('reg-fecha').value = reg.fecha;
+                document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
+                document.getElementById('reg-serie').value = reg.serie || '';
+            } else {
+                document.getElementById('reg-id-edit').value = '';
+                document.getElementById('reg-estacion').value = '';
+                document.getElementById('reg-item').value = '';
+                document.getElementById('reg-descripcion').value = '';
+                document.getElementById('reg-cantidad').value = '1';
+                document.getElementById('reg-ndescargo').value = '';
+                document.getElementById('reg-serie').value = '';
+            }
+        }
+
+        function cerrarModalRegistro() { document.getElementById('modal-registro').classList.remove('show'); }
+
+        function autocompletarDescripcion(itemCode) {
+            let encontrado = itemsMaster.find(i => i.item === itemCode.trim());
+            if (encontrado) {
+                document.getElementById('reg-descripcion').value = encontrado.desc;
+            }
+        }
+
+        function guardarRegistro() {
+            let id = document.getElementById('reg-id-edit').value;
+            let estacion = document.getElementById('reg-estacion').value.trim();
+            let item = document.getElementById('reg-item').value.trim();
+            let descripcion = document.getElementById('reg-descripcion').value.trim();
+            let cantidad = document.getElementById('reg-cantidad').value;
+            let fecha = document.getElementById('reg-fecha').value;
+            let ndescargo = document.getElementById('reg-ndescargo').value.trim();
+            let serie = document.getElementById('reg-serie').value.trim();
+
+            if (!estacion || !item || !cantidad || !fecha) {
+                alert('Complete los campos obligatorios (*)');
+                return;
+            }
+
+            if (!registros[obraActualId]) registros[obraActualId] = [];
+
+            if (id) {
+                let reg = registros[obraActualId].find(r => r.id == id);
+                reg.estacion = estacion;
+                reg.item = item;
+                reg.descripcion = descripcion;
+                reg.cantidad = cantidad;
+                reg.fecha = fecha;
+                reg.ndescargo = ndescargo;
+                reg.serie = serie;
+            } else {
+                registros[obraActualId].push({
+                    id: Date.now(),
+                    estacion, item, descripcion, cantidad, fecha, ndescargo, serie
+                });
+            }
+
+            guardarDatosLocal();
+            cerrarModalRegistro();
+            actualizarSelectEstaciones();
+            renderizarRegistros();
+        }
+
+        function editarRegistro(id) { abrirModalRegistro(id); }
+
+        function eliminarRegistro(id) {
+            if (confirm('¿Eliminar este registro de la planilla?')) {
+                registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
+                guardarDatosLocal();
+                actualizarSelectEstaciones();
+                renderizarRegistros();
+            }
+        }
+
+        function renderizarItemsMaster(filtro = '') {
+            let tbody = document.getElementById('tabla-items-master');
+            tbody.innerHTML = '';
+            let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
+
+            filtrados.forEach(item => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.item}</strong></td>
+                    <td>${item.desc}</td>
+                    <td>
+                        <button onclick="editarItemMaster('${item.item}')" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:8px;"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarItemMaster('${item.item}')" style="background:none; border:none; color:#c62828; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarItemsMaster() { renderizarItemsMaster(document.getElementById('search-item-master').value); }
+
+        function abrirModalItemMaster(codigo = null) {
+            document.getElementById('modal-item-master').classList.add('show');
+            if (codigo) {
+                let itm = itemsMaster.find(i => i.item === codigo);
+                document.getElementById('item-original-id').value = itm.item;
+                document.getElementById('master-item-code').value = itm.item;
+                document.getElementById('master-item-desc').value = itm.desc;
+            } else {
+                document.getElementById('item-original-id').value = '';
+                document.getElementById('master-item-code').value = '';
+                document.getElementById('master-item-desc').value = '';
+            }
+        }
+
+        function cerrarModalItemMaster() { document.getElementById('modal-item-master').classList.remove('show'); }
+
+        function guardarItemMaster() {
+            let originalId = document.getElementById('item-original-id').value;
+            let code = document.getElementById('master-item-code').value.trim();
+            let desc = document.getElementById('master-item-desc').value.trim();
+
+            if (!code || !desc) { alert('Complete todos los campos'); return; }
+
+            if (originalId) {
+                itemsMaster = itemsMaster.filter(i => i.item !== originalId);
+            }
+            itemsMaster.push({ item: code, desc: desc });
+            guardarDatosLocal();
+            cerrarModalItemMaster();
+            renderizarItemsMaster();
+        }
+
+        function editarItemMaster(code) { abrirModalItemMaster(code); }
+
+        function eliminarItemMaster(code) {
+            if (confirm('¿Eliminar este ítem del catálogo?')) {
+                itemsMaster = itemsMaster.filter(i => i.item !== code);
+                guardarDatosLocal();
+                renderizarItemsMaster();
+            }
+        }
+
+        function exportarExcel(obraId) {
+            let obra = obras.find(o => o.id === obraId);
+            let listaReg = registros[obraId] || [];
+
+            if (listaReg.length === 0) {
+                alert('No hay registros en esta obra para exportar.');
+                return;
+            }
+
+            let csvContent = "\uFEFFEstación;Zona;Ítems;Descripción;Cantidad;Circuito;Fecha;N. Descargo;Proyecto;SERIE\n";
+
+            listaReg.forEach(r => {
+                let fila = [
+                    r.estacion,
+                    obra.zona,
+                    r.item,
+                    `"${r.descripcion}"`,
+                    r.cantidad,
+                    obra.circuito,
+                    r.fecha,
+                    r.ndescargo || '',
+                    obra.proyecto,
+                    r.serie || ''
+                ];
+                csvContent += fila.join(";") + "\n";
+            });
+
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = `${obra.proyecto}_Planilla.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
