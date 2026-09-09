@@ -35,6 +35,29 @@
         header h1 { font-size: 1.2rem; }
         .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
 
+        /* Botonera Superior de Exportación / Carga en Vista Principal */
+        .top-actions-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .btn-top-action {
+            flex: 1;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 8px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #333;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-top-action:hover { background-color: #f1f1f1; }
+
         /* Buscadores y Filtros Generales */
         .search-box-general {
             position: relative;
@@ -294,7 +317,7 @@
         .btn-save { background-color: var(--accent-color); color: white; }
     </style>
     <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#1e4620">
+    <meta name="theme-color" content="#1e4620">
 </head>
 <body>
 
@@ -304,6 +327,20 @@
             <h1>PLANILLA APP</h1>
             <i class="fa-solid fa-bolt"></i>
         </header>
+
+        <!-- ACCESOS RÁPIDOS DE RESPALDO / COMPARTIR -->
+        <div class="top-actions-bar" style="margin-top: 15px;">
+            <button class="btn-top-action" onclick="abrirModalExportarObra()">
+                <i class="fa-solid fa-file-export" style="color: #0277bd;"></i> Exportar Obra
+            </button>
+            <button class="btn-top-action" onclick="exportarTodoJSON()">
+                <i class="fa-solid class fa-database" style="color: #2e7d32;"></i> Exportar Todo
+            </button>
+            <button class="btn-top-action" onclick="document.getElementById('input-cargar-json').click()">
+                <i class="fa-solid fa-file-import" style="color: #c62828;"></i> Cargar Obra
+            </button>
+            <input type="file" id="input-cargar-json" accept=".json" style="display: none;" onchange="cargarObraJSON(event)">
+        </div>
 
         <div class="search-box-general">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -435,6 +472,21 @@
         </div>
     </div>
 
+    <!-- MODAL: SELECCIONAR OBRA PARA EXPORTAR -->
+    <div class="modal" id="modal-exportar-obra">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Exportar Obra Específica</h3>
+            <div class="form-group">
+                <label>Selecciona la obra a compartir con tu compañero:</label>
+                <select id="select-obra-exportar" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;"></select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalExportarObra()">Cancelar</button>
+                <button class="btn btn-save" onclick="ejecutarExportarObraSeleccionada()">Exportar JSON</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: NUEVO / EDITAR REGISTRO -->
     <div class="modal" id="modal-registro">
         <div class="modal-content">
@@ -561,7 +613,7 @@
             { item: '51', desc: 'Cambio de fuente de poder en concentrador ubicado en gabinete' },
             { item: '52', desc: 'no se encontro ninguna cohincidencia con el archivo base' },
             { item: '53', desc: 'Cambio de Micro, Tarjeta de Control y de interconexión en red aérea' },
-            { item: '54', desc: 'Cambio Modulo de 100, 60 o 5A en concentrador ubicado en red aérea' },
+            { item: '54', desc: 'Cambio Modulo de 100, 60 o 5A in concentrador ubicado en red aérea' },
             { item: '55', desc: 'Cambio en config parcial del concentrador de energía con Pocket UPC' },
             { item: '56', desc: 'Configuración Física Concentrador Secundario o Esclava – Cable RS 485' },
             { item: '57', desc: 'Configuració Física Concentrador Secundario o Esclava–Radio Frecuencia' },
@@ -577,7 +629,7 @@
             { item: '67', desc: 'Cambio caja de macromedidor' },
             { item: '68', desc: 'Cambiar TCs tipo núcleo partido para mantenimiento de macromedidor' },
             { item: '69', desc: 'Cambiar TCs tipo ventana para mantenimiento de macromedidor' },
-            { item: '70', desc: 'Cambio completo de los cables de  señal en macromedidor' },
+            { item: '70', desc: 'Cambio completo de los cables de señal en macromedidor' },
             { item: '71', desc: 'Instalación o cambio de medidor para sistema de medida indirecta' },
             { item: '72', desc: 'Instalación o cambio de medidor para sistema de medida semidirecta' },
             { item: '73', desc: 'Reubicación del sistema de medida semidirecta' },
@@ -616,7 +668,7 @@
             { item: '106', desc: 'Colocación de adecuación poste en referencia secundario' },
             { item: '107', desc: 'Colocación de adecuación poste fin de línea secundario' },
             { item: '108', desc: 'Colocación de cruceta y tiranta o diagonal' },
-            { item: '109', desc: 'Colocación de estribo  en red primaria (1 unidad)' },
+            { item: '109', desc: 'Colocación de estribo en red primaria (1 unidad)' },
             { item: '110', desc: 'Colocación de estribo en red primaria (2 unidades)' },
             { item: '111', desc: 'Colocación de estribo en red primaria (3 unidades)' },
             { item: '112', desc: 'Conector amovible' },
@@ -738,7 +790,7 @@
             { item: '228', desc: 'Gestión social integral para la reducción de pérdidas de energía' },
             { item: '229', desc: 'Actividades de poda y descope de árboles' },
             { item: '230', desc: 'Recolección y disposición final de troncos y ramas' },
-            { item: '231', desc: 'Transporte de medidores en paquete de 0  a 200 kg con estino a Bogota' },
+            { item: '231', desc: 'Transporte de medidores en paquete de 0 a 200 kg con estino a Bogota' },
             { item: '232', desc: 'Trans. medidores en paquete de  0 a 200 Kg con destino a Cartagena' },
             { item: '233', desc: 'Transporte de medidores en paquete de 0 a 200 kg con destino a Cali' },
             { item: '234', desc: 'Transporte de medidores en paquete de 0 a 200 kg destino a Medellín' },
@@ -906,7 +958,7 @@
                     </div>
                     <div class="obra-actions">
                         <button class="btn-edit" onclick="editarObra(${obra.id})"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-export" onclick="exportarExcel(${obra.id})"><i class="fa-solid fa-file-excel"></i></button>
+                        <button class="btn-export" onclick="exportarExcel(${obra.id})" title="Exportar a Excel (CSV)"><i class="fa-solid fa-file-excel"></i></button>
                         <button class="btn-delete" onclick="eliminarObra(${obra.id})"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
@@ -969,6 +1021,117 @@
                 guardarDatosLocal();
                 renderizarObras();
             }
+        }
+
+        // --- FUNCIONES DE EXPORTAR E IMPORTAR (JSON / OBRAS / TODO) ---
+        function exportarTodoJSON() {
+            const dataBackup = {
+                obras: obras,
+                registros: registros,
+                itemsMaster: itemsMaster
+            };
+            const blob = new Blob([JSON.stringify(dataBackup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `respaldo_completo_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function abrirModalExportarObra() {
+            if (obras.length === 0) {
+                alert('No hay obras registradas para exportar.');
+                return;
+            }
+            let select = document.getElementById('select-obra-exportar');
+            select.innerHTML = '';
+            obras.forEach(o => {
+                select.innerHTML += `<option value="${o.id}">${o.proyecto} (${o.circuito || 'Sin circuito'})</option>`;
+            });
+            document.getElementById('modal-exportar-obra').classList.add('show');
+        }
+
+        function cerrarModalExportarObra() {
+            document.getElementById('modal-exportar-obra').classList.remove('show');
+        }
+
+        function ejecutarExportarObraSeleccionada() {
+            let obraId = parseInt(document.getElementById('select-obra-exportar').value);
+            let obra = obras.find(o => o.id === obraId);
+            if (!obra) return;
+
+            let datosObraUnica = {
+                esObraIndividual: true,
+                obra: obra,
+                registros: registros[obraId] || [],
+                itemsMaster: itemsMaster
+            };
+
+            const blob = new Blob([JSON.stringify(datosObraUnica, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `obra_${obra.proyecto.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            cerrarModalExportarObra();
+        }
+
+        function cargarObraJSON(event) {
+            const archivo = event.target.files[0];
+            if (!archivo) return;
+
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                try {
+                    const contenido = JSON.parse(e.target.result);
+
+                    // Validar si es una obra individual o un respaldo completo
+                    if (contenido.esObraIndividual && contenido.obra) {
+                        let nuevaObra = contenido.obra;
+                        // Generar nuevo ID para evitar colisiones si ya existe una obra con ese ID
+                        let idOriginal = nuevaObra.id;
+                        let nuevoId = Date.now();
+                        nuevaObra.id = nuevoId;
+                        nuevaObra.ultimaMod = Date.now();
+
+                        // Verificar si el proyecto ya existe en la lista para renombrarlo levemente o actualizarlo
+                        obras.push(nuevaObra);
+                        registros[nuevoId] = contenido.registros || [];
+
+                        // Opcional: fusionar o actualizar itemsMaster si vienen nuevos
+                        if (contenido.itemsMaster) {
+                            contenido.itemsMaster.forEach(itemM => {
+                                if (!itemsMaster.some(i => i.item === itemM.item)) {
+                                    itemsMaster.push(itemM);
+                                }
+                            });
+                        }
+
+                        guardarDatosLocal();
+                        renderizarObras();
+                        alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito para continuarla!`);
+                    } else if (contenido.obras && contenido.registros) {
+                        // Respaldo completo
+                        if (confirm('Este archivo contiene un respaldo completo. ¿Desea fusionarlo o reemplazar los datos actuales?')) {
+                            obras = contenido.obras;
+                            registros = contenido.registros;
+                            if (contenido.itemsMaster) itemsMaster = contenido.itemsMaster;
+                            guardarDatosLocal();
+                            renderizarObras();
+                            alert('¡Datos restaurados con éxito!');
+                        }
+                    } else {
+                        alert('El formato del archivo JSON no es válido.');
+                    }
+                } catch (error) {
+                    alert('Error al leer el archivo JSON.');
+                }
+                // Limpiar input file
+                event.target.value = '';
+            };
+            lector.readAsText(archivo);
         }
 
         function abrirPlanilla(id) {
@@ -1114,7 +1277,6 @@
                 document.getElementById('reg-cantidad').value = '1';
                 document.getElementById('reg-serie').value = '';
 
-                // Autocargar datos del último registro si existe (Estación, Fecha y N. Descargo)
                 let lista = registros[obraActualId] || [];
                 if (lista.length > 0) {
                     let ultimo = lista[lista.length - 1];
@@ -1296,14 +1458,15 @@
             link.click();
             document.body.removeChild(link);
         }
+
         // Registrar Service Worker para permitir instalación PWA
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
-            .catch(err => console.log('Error al registrar el Service Worker:', err));
-    });
-}
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+                    .catch(err => console.log('Error al registrar el Service Worker:', err));
+            });
+        }
     </script>
 </body>
 </html>
