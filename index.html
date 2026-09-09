@@ -35,39 +35,59 @@
         header h1 { font-size: 1.2rem; }
         .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
 
-        /* Botonera Superior de Exportación / Carga en Vista Principal (Oculta por defecto) */
-        .top-actions-bar {
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            background: #fff;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border: 1px solid var(--border-color);
+        /* Botón y Menú Desplegable Superior de Exportación / Carga */
+        .dropdown-container {
+            position: relative;
+            margin: 15px 0 10px 0;
         }
-        .top-actions-row {
-            display: flex;
-            gap: 8px;
-        }
-        .btn-top-action {
-            flex: 1;
-            background-color: #f9f9f9;
+        .btn-top-dropdown {
+            width: 100%;
+            background-color: #fff;
             border: 1px solid var(--border-color);
             border-radius: 5px;
-            padding: 8px 10px;
-            font-size: 0.85rem;
+            padding: 10px 12px;
+            font-size: 0.9rem;
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
+            justify-content: space-between;
             color: #333;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-weight: bold;
         }
-        .btn-top-action:hover { background-color: #f1f1f1; }
+        .btn-top-dropdown:hover { background-color: #f1f1f1; }
+        
+        .top-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 50;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .top-dropdown-menu.show { display: block; }
+        .top-dropdown-menu button {
+            width: 100%;
+            padding: 12px 15px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        .top-dropdown-menu button:last-child { border-bottom: none; }
+        .top-dropdown-menu button:hover { background-color: #f1f1f1; }
 
         /* Buscadores y Filtros Generales */
         .search-box-general {
@@ -336,24 +356,24 @@
     <div id="main-view" class="view active">
         <header>
             <h1>PLANILLA APP</h1>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <button onclick="toggleTopActions()" style="background: none; border: none; color: white; font-size: 1.1rem; cursor: pointer;" title="Opciones de Respaldo / Carga"><i class="fa-solid fa-database"></i></button>
-                <i class="fa-solid fa-bolt"></i>
-            </div>
+            <i class="fa-solid fa-bolt"></i>
         </header>
 
-        <!-- ACCESOS RÁPIDOS DE RESPALDO / COMPARTIR (OCULTOS POR DEFECTO) -->
-        <div class="top-actions-bar" id="top-actions-bar">
-            <div style="font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 4px;">OPCIONES DE DATOS Y RESPALDO</div>
-            <div class="top-actions-row">
-                <button class="btn-top-action" onclick="abrirModalExportarObra()">
-                    <i class="fa-solid fa-file-export" style="color: #0277bd;"></i> Exportar Obra
+        <!-- BOTÓN Y MENÚ DESPLEGABLE DE RESPALDO / COMPARTIR -->
+        <div class="dropdown-container">
+            <button class="btn-top-dropdown" onclick="toggleTopDropdownMenu()">
+                <span><i class="fa-solid fa-database" style="color: #2e7d32; margin-right: 6px;"></i> Opciones de Archivos y Respaldo</span>
+                <i class="fa-solid fa-chevron-down" id="top-dropdown-icon"></i>
+            </button>
+            <div class="top-dropdown-menu" id="top-dropdown-menu">
+                <button onclick="abrirModalExportarObra(); cerrarTopDropdownMenu();">
+                    <i class="fa-solid fa-file-export" style="color: #0277bd; width: 20px;"></i> Exportar Obra
                 </button>
-                <button class="btn-top-action" onclick="exportarTodoJSON()">
-                    <i class="fa-solid fa-database" style="color: #2e7d32;"></i> Exportar Todo
+                <button onclick="exportarTodoJSON(); cerrarTopDropdownMenu();">
+                    <i class="fa-solid fa-database" style="color: #2e7d32; width: 20px;"></i> Exportar Todo
                 </button>
-                <button class="btn-top-action" onclick="document.getElementById('input-cargar-json').click()">
-                    <i class="fa-solid fa-file-import" style="color: #c62828;"></i> Cargar Obra
+                <button onclick="document.getElementById('input-cargar-json').click(); cerrarTopDropdownMenu();">
+                    <i class="fa-solid fa-file-import" style="color: #c62828; width: 20px;"></i> Cargar Obra
                 </button>
             </div>
             <input type="file" id="input-cargar-json" accept=".json" style="display: none;" onchange="cargarObraJSON(event)">
@@ -944,20 +964,35 @@
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(vistaId).classList.add('active');
             cerrarFabMenu();
+            cerrarTopDropdownMenu();
         }
 
         function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
         function cerrarFabMenu() { document.getElementById('fab-menu').classList.remove('show'); }
-        
-        // Función para mostrar u ocultar la botonera superior de respaldo
-        function toggleTopActions() {
-            const bar = document.getElementById('top-actions-bar');
-            if (bar.style.display === 'flex') {
-                bar.style.display = 'none';
-            } else {
-                bar.style.display = 'flex';
+
+        function toggleTopDropdownMenu() {
+            const menu = document.getElementById('top-dropdown-menu');
+            const icon = document.getElementById('top-dropdown-icon');
+            menu.classList.toggle('show');
+            icon.classList.toggle('fa-chevron-up');
+            icon.classList.toggle('fa-chevron-down');
+        }
+        function cerrarTopDropdownMenu() {
+            const menu = document.getElementById('top-dropdown-menu');
+            const icon = document.getElementById('top-dropdown-icon');
+            if (menu) menu.classList.remove('show');
+            if (icon) {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
             }
         }
+
+        // Cerrar menú superior al hacer clic fuera
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown-container')) {
+                cerrarTopDropdownMenu();
+            }
+        });
 
         function volverPrincipal() { cambiarVista('main-view'); renderizarObras(); }
         function abrirVistaItems() { cambiarVista('items-view'); renderizarItemsMaster(); }
