@@ -496,6 +496,10 @@
                 <input type="text" id="input-circuito" placeholder="Ej: SAN SEBASTIAN">
             </div>
             <div class="form-group">
+                <label>Ubicación</label>
+                <input type="text" id="input-ubicacion" placeholder="Ej: Magangué, Bolívar">
+            </div>
+            <div class="form-group">
                 <label>Zona</label>
                 <select id="input-zona">
                     <option value="Urbano">Urbano</option>
@@ -586,7 +590,7 @@
 
     <script>
         let obras = JSON.parse(localStorage.getItem('planilla_obras')) || [
-            { id: 1, proyecto: 'HIS_AV659', circuito: 'SAN SEBASTIAN', zona: 'Urbano', ultimaMod: Date.now() - 1000 }
+            { id: 1, proyecto: 'HIS_AV659', circuito: 'SAN SEBASTIAN', ubicacion: 'Magangué', zona: 'Urbano', ultimaMod: Date.now() - 1000 }
         ];
 
         let registros = JSON.parse(localStorage.getItem('planilla_registros')) || {
@@ -1016,7 +1020,7 @@
                         <i class="fa-regular fa-folder-open" style="font-size: 1.2rem; color: var(--accent-color);"></i>
                         <div>
                             <strong>${obra.proyecto}</strong>
-                            <div style="font-size: 0.8rem; color: #666;">${obra.circuito || 'Sin circuito'} (${obra.zona})</div>
+                            <div style="font-size: 0.8rem; color: #666;">${obra.circuito || 'Sin circuito'} - ${obra.ubicacion || 'Sin ubicación'} (${obra.zona})</div>
                         </div>
                     </div>
                     <div class="obra-actions">
@@ -1038,13 +1042,15 @@
                 let obra = obras.find(o => o.id === id);
                 document.getElementById('obra-id-edit').value = obra.id;
                 document.getElementById('input-proyecto').value = obra.proyecto;
-                document.getElementById('input-circuito').value = obra.circuito;
-                document.getElementById('input-zona').value = obra.zona;
+                document.getElementById('input-circuito').value = obra.circuito || '';
+                document.getElementById('input-ubicacion').value = obra.ubicacion || '';
+                document.getElementById('input-zona').value = obra.zona || 'Urbano';
             } else {
                 document.getElementById('modal-obra-title').innerText = 'Nueva Obra';
                 document.getElementById('obra-id-edit').value = '';
                 document.getElementById('input-proyecto').value = '';
                 document.getElementById('input-circuito').value = '';
+                document.getElementById('input-ubicacion').value = '';
                 document.getElementById('input-zona').value = 'Urbano';
             }
         }
@@ -1055,6 +1061,7 @@
             let id = document.getElementById('obra-id-edit').value;
             let proyecto = document.getElementById('input-proyecto').value.trim();
             let circuito = document.getElementById('input-circuito').value.trim();
+            let ubicacion = document.getElementById('input-ubicacion').value.trim();
             let zona = document.getElementById('input-zona').value;
 
             if (!proyecto) { alert('El campo Proyecto es obligatorio'); return; }
@@ -1063,11 +1070,12 @@
                 let obra = obras.find(o => o.id == id);
                 obra.proyecto = proyecto;
                 obra.circuito = circuito;
+                obra.ubicacion = ubicacion;
                 obra.zona = zona;
                 obra.ultimaMod = Date.now();
             } else {
                 let nuevaId = Date.now();
-                obras.push({ id: nuevaId, proyecto, circuito, zona, ultimaMod: Date.now() });
+                obras.push({ id: nuevaId, proyecto, circuito, ubicacion, zona, ultimaMod: Date.now() });
                 registros[nuevaId] = [];
             }
             guardarDatosLocal();
@@ -1200,7 +1208,8 @@
             document.getElementById('titulo-planilla').innerText = obra.proyecto;
             document.getElementById('info-general-obra').innerHTML = `
                 <p><strong>Proyecto:</strong> ${obra.proyecto}</p>
-                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Zona:</strong> ${obra.zona}</p>
+                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Ubicación:</strong> ${obra.ubicacion || 'N/A'}</p>
+                <p><strong>Zona:</strong> ${obra.zona}</p>
             `;
             cambiarVista('planilla-view');
             actualizarSelectEstaciones();
