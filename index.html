@@ -244,8 +244,9 @@
         }
         .drag-handle {
             cursor: grab;
-            color: #666;
-            padding: 2px 6px;
+            color: #888;
+            margin-right: 8px;
+            display: inline-block;
         }
         .drag-handle:active {
             cursor: grabbing;
@@ -719,8 +720,12 @@
                 tr.draggable = true;
                 tr.dataset.index = index;
 
+                // El tirador de arrastre se coloca en la primera celda (Estación)
                 tr.innerHTML = `
-                    <td>${reg.estacion}</td>
+                    <td>
+                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
+                        ${reg.estacion}
+                    </td>
                     <td class="${claseVerde}"><strong>${reg.item}</strong></td>
                     <td>${reg.descripcion}</td>
                     <td>${reg.cantidad}</td>
@@ -728,9 +733,8 @@
                     <td>${reg.ndescargo || ''}</td>
                     <td>${reg.serie || ''}</td>
                     <td>
-                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
-                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-left:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer; margin-left:6px;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
 
@@ -929,7 +933,6 @@
             }
         }
 
-        // FUNCIÓN PARA DESCARGAR PLANTILLA MODELO DE ÍTEMS
         function descargarPlantillaItems() {
             let csv = "\uFEFFItem;Descripción\n80;Colocación de poste de concreto de 12m o 14m\n1465239;POSTE DE HPC/HPV DE 12M x 1030 daN (CR)";
             let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -942,7 +945,6 @@
             document.body.removeChild(a);
         }
 
-        // FUNCIÓN PARA CARGAR ÍTEMS DESDE ARCHIVO EXCEL/CSV
         function importarItemsExcel(event) {
             let file = event.target.files[0];
             if (!file) return;
@@ -957,7 +959,6 @@
                     let line = lines[i].trim();
                     if (!line) continue;
                     
-                    // Detectar separador (; o ,)
                     let separator = line.includes(';') ? ';' : ',';
                     let cols = line.split(separator);
 
@@ -966,7 +967,6 @@
                         let itemDesc = cols.slice(1).join(separator).replace(/["']/g, "").trim();
 
                         if (itemCode && itemDesc) {
-                            // Si ya existe, actualizarlo, si no, agregarlo
                             let existe = itemsMaster.find(im => im.item === itemCode);
                             if (existe) {
                                 existe.desc = itemDesc;
@@ -981,7 +981,7 @@
                 guardarDatosLocal();
                 renderizarItemsMaster();
                 alert(`¡Se importaron/actualizaron ${countAdded} ítems correctamente!`);
-                event.target.value = ''; // limpiar input
+                event.target.value = '';
             };
             reader.readAsText(file, 'UTF-8');
         }
