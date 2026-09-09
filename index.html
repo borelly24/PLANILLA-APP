@@ -207,6 +207,27 @@
         }
         th { background-color: var(--primary-color); color: white; }
 
+        /* Estilos para Drag & Drop Móvil/Escritorio */
+        tr.draggable-row {
+            touch-action: none; /* Evita que el scroll de la página bloquee el arrastre táctil */
+            transition: background-color 0.2s;
+        }
+        tr.dragging {
+            opacity: 0.4;
+            background-color: #e2e8f0 !important;
+        }
+        tr.drag-over {
+            border-top: 2px dashed var(--accent-color);
+        }
+        .drag-handle {
+            cursor: grab;
+            color: #666;
+            padding: 2px 6px;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
         /* Celda destacada de 3 cifras en verde */
         .highlight-green {
             background-color: var(--success-color) !important;
@@ -327,7 +348,8 @@
                         <th>Ítems</th>
                         <th>Descripción</th>
                         <th>Cant.</th>
-                        <th>Fecha Descargo</th>
+                        <th>Fecha</th>
+                        <th>N. Descargo</th>
                         <th>Series</th>
                         <th>Acciones</th>
                     </tr>
@@ -421,7 +443,7 @@
                 <input type="number" id="reg-cantidad" value="1">
             </div>
             <div class="form-group">
-                <label>Fecha de Descargo*</label>
+                <label>Fecha*</label>
                 <input type="date" id="reg-fecha">
             </div>
             <div class="form-group">
@@ -640,7 +662,6 @@
             let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase();
             let filtroEstacion = document.getElementById('filtro-estacion-select').value;
 
-            // Filtramos conservando los índices originales para poder moverlos con precisión
             let filtradosConIndex = lista.map((reg, index) => ({ reg, index })).filter(({ reg }) => {
                 let matchItem = reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
                 let matchEstacion = filtroEstacion === "" || reg.estacion === filtroEstacion;
@@ -648,7 +669,7 @@
             });
 
             if (filtradosConIndex.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777;">No hay registros cargados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros cargados.</td></tr>`;
                 return;
             }
 
@@ -657,34 +678,63 @@
                 let claseVerde = esTresCifras ? 'highlight-green' : '';
 
                 let tr = document.createElement('tr');
+                tr.className = 'draggable-row';
+                tr.draggable = true;
+                tr.dataset.index = index;
+
                 tr.innerHTML = `
                     <td>${reg.estacion}</td>
                     <td class="${claseVerde}"><strong>${reg.item}</strong></td>
                     <td>${reg.descripcion}</td>
                     <td>${reg.cantidad}</td>
                     <td>${reg.fecha}</td>
-                    <td>${reg.serie || reg.ndescargo || ''}</td>
+                    <td>${reg.ndescargo || ''}</td>
+                    <td>${reg.serie || ''}</td>
                     <td>
-                        <button onclick="moverFila(${index}, -1)" style="background:none; border:none; color:#333; cursor:pointer; margin-right:4px;" title="Mover Arriba"><i class="fa-solid fa-arrow-up"></i></button>
-                        <button onclick="moverFila(${index}, 1)" style="background:none; border:none; color:#333; cursor:pointer; margin-right:8px;" title="Mover Abajo"><i class="fa-solid fa-arrow-down"></i></button>
-                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
+                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-left:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer; margin-left:6px;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
+
+                // Eventos de Drag & Drop Integrados
+                tr.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', index);
+                    setTimeout(() => tr.classList.add('dragging'), 0);
+                });
+
+                tr.addEventListener('dragend', () => {
+                    tr.classList.remove('dragging');
+                    document.querySelectorAll('.draggable-row').forEach(row => row.classList.remove('drag-over'));
+                });
+
+                tr.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    tr.classList.add('drag-over');
+                });
+
+                tr.addEventListener('dragleave', () => {
+                    tr.classList.remove('drag-over');
+                });
+
+                tr.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    tr.classList.remove('drag-over');
+                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIndex = index;
+                    if (fromIndex !== toIndex) {
+                        moverFilaPorIndice(fromIndex, toIndex);
+                    }
+                });
+
                 tbody.appendChild(tr);
             });
         }
 
-        function moverFila(index, direccion) {
+        function moverFilaPorIndice(fromIndex, toIndex) {
             let lista = registros[obraActualId];
-            let nuevoIndex = index + direccion;
-            if (nuevoIndex < 0 || nuevoIndex >= lista.length) return; // Fuera de límites
-            
-            // Intercambiar posiciones
-            let temp = lista[index];
-            lista[index] = lista[nuevoIndex];
-            lista[nuevoIndex] = temp;
-
+            let elementoMovido = lista.splice(fromIndex, 1)[0];
+            lista.splice(toIndex, 0, elementoMovido);
             guardarDatosLocal();
             renderizarRegistros();
         }
