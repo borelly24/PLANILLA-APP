@@ -55,7 +55,7 @@
             color: #777;
         }
 
-        /* FILTROS DE CAMPO (Exacto como tu diseño) */
+        /* FILTROS DE CAMPO */
         .filtros-container {
             background-color: #e9ecef;
             border: 1px solid #ced4da;
@@ -300,7 +300,7 @@
 
         <div class="general-data" id="info-general-obra"></div>
 
-        <!-- SECCIÓN DE FILTROS DE CAMPO (Tal cual lo diseñaste) -->
+        <!-- SECCIÓN DE FILTROS DE CAMPO -->
         <div class="filtros-container">
             <div class="filtros-header">FILTROS DE CAMPO</div>
             <div class="filtros-inputs-row">
@@ -313,7 +313,7 @@
                         <option value="">Estación</option>
                     </select>
                 </div>
-                <div class="date-box-filter" onclick="limpiarFiltroFecha()" title="Filtrar por Fecha">
+                <div class="date-box-filter" onclick="limpiarFiltroFecha()" title="Limpiar Filtros">
                     <i class="fa-solid fa-calendar-days" style="color: #333;"></i>
                 </div>
             </div>
@@ -402,7 +402,7 @@
     <!-- MODAL: NUEVO / EDITAR REGISTRO -->
     <div class="modal" id="modal-registro">
         <div class="modal-content">
-            <h3 style="margin-bottom: 15px;">Nuevo Registro</h3>
+            <h3 style="margin-bottom: 15px;" id="modal-reg-title">Nuevo Registro</h3>
             <input type="hidden" id="reg-id-edit">
             <div class="form-group">
                 <label>Estación*</label>
@@ -461,8 +461,7 @@
 
     <script>
         let obras = JSON.parse(localStorage.getItem('planilla_obras')) || [
-            { id: 1, proyecto: 'HIS_AV659', circuito: 'SAN SEBASTIAN', zona: 'Urbano', ultimaMod: Date.now() - 1000 },
-            { id: 2, proyecto: 'HIS_K7907', circuito: 'N/A', zona: 'Rural', ultimaMod: Date.now() - 50000 }
+            { id: 1, proyecto: 'HIS_AV659', circuito: 'SAN SEBASTIAN', zona: 'Urbano', ultimaMod: Date.now() - 1000 }
         ];
 
         let registros = JSON.parse(localStorage.getItem('planilla_registros')) || {
@@ -472,6 +471,7 @@
             ]
         };
 
+        // Listado completo de ítems eléctricos integrado
         let itemsMaster = JSON.parse(localStorage.getItem('planilla_items_master')) || [
             { item: '1', desc: 'Inspección Servicio Medida Directa' },
             { item: '2', desc: 'Instalación completa del suministro (Medida directa)' },
@@ -664,8 +664,8 @@
                     <td>${reg.fecha}</td>
                     <td>${reg.serie || reg.ndescargo || ''}</td>
                     <td>
-                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:8px;"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:8px;" title="Editar Registro"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar Registro"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -682,6 +682,7 @@
             document.getElementById('modal-registro').classList.add('show');
             document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
             if (id) {
+                document.getElementById('modal-reg-title').innerText = 'Editar Registro';
                 let reg = registros[obraActualId].find(r => r.id === id);
                 document.getElementById('reg-id-edit').value = reg.id;
                 document.getElementById('reg-estacion').value = reg.estacion;
@@ -692,6 +693,7 @@
                 document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
                 document.getElementById('reg-serie').value = reg.serie || '';
             } else {
+                document.getElementById('modal-reg-title').innerText = 'Nuevo Registro';
                 document.getElementById('reg-id-edit').value = '';
                 document.getElementById('reg-estacion').value = '';
                 document.getElementById('reg-item').value = '';
