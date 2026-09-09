@@ -1258,8 +1258,9 @@
             }
 
             filtradosConIndex.forEach(({ reg, index }) => {
-                let esTresCifras = reg.item.trim().length === 3;
-                let claseVerde = esTresCifras ? 'highlight-green' : '';
+                let longitudItem = reg.item.trim().length;
+                let esDe1a3Cifras = longitudItem >= 1 && longitudItem <= 3;
+                let claseVerde = esDe1a3Cifras ? 'highlight-green' : '';
 
                 let tr = document.createElement('tr');
                 tr.className = 'draggable-row';
