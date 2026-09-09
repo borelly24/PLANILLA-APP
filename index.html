@@ -55,29 +55,6 @@
             color: #777;
         }
 
-        /* Botones de acción superior en vistas */
-        .action-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .action-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            color: white;
-        }
-        .btn-excel-import { background-color: #0277bd; }
-        .btn-excel-template { background-color: #37474f; }
-
         /* FILTROS DE CAMPO */
         .filtros-container {
             background-color: #e9ecef;
@@ -393,19 +370,7 @@
             <div></div>
         </header>
 
-        <!-- Barra de acciones para carga masiva por Excel / CSV -->
-        <div class="action-bar" style="margin-top: 15px;">
-            <button class="action-btn btn-excel-import" onclick="document.getElementById('file-excel-items').click()">
-                <i class="fa-solid fa-file-excel"></i> Cargar Plantilla
-            </button>
-            <input type="file" id="file-excel-items" accept=".csv, .txt, .xlsx, .xls" style="display:none" onchange="importarItemsExcel(event)">
-            
-            <button class="action-btn btn-excel-template" onclick="descargarPlantillaItems()">
-                <i class="fa-solid fa-download"></i> Plantilla Modelo
-            </button>
-        </div>
-
-        <div class="search-box-general">
+        <div class="search-box-general" style="margin-top: 15px;">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="search-item-master" placeholder="Buscar ítem o descripción..." onkeyup="filtrarItemsMaster()">
         </div>
@@ -522,8 +487,8 @@
 
         let registros = JSON.parse(localStorage.getItem('planilla_registros')) || {
             1: [
-                { id: 101, estacion: 'EPP 01-1', item: '80', descripcion: 'Colocación de poste de concreto de 12m o 14m', cantidad: 1, fecha: '2026-05-10', ndescargo: '123', serie: '' },
-                { id: 102, estacion: 'EPP 01-1', item: '1465239', descripcion: 'POSTE DE HPC/HPV DE 12M x 1030 daN (CR)', cantidad: 1, fecha: '2026-05-10', ndescargo: '124', serie: 'ABC99' }
+                { id: 101, estacion: 'EPP 01-1', item: '80', descripcion: 'Colocación de poste de concreto 12m-2500-1600-1324-1030-735-500 daN', cantidad: 1, fecha: '2026-05-10', ndescargo: '123', serie: '' },
+                { id: 102, estacion: 'EPP 01-1', item: '1465239', descripcion: 'POSTE HPC/HPV 12MX1030 DAN(CR)', cantidad: 1, fecha: '2026-05-10', ndescargo: '124', serie: 'ABC99' }
             ]
         };
 
@@ -548,8 +513,334 @@
             { item: '18', desc: 'Instalación o cambio de acometida y medidor' },
             { item: '19', desc: 'Adecuación de acometida' },
             { item: '20', desc: 'Adecuación de Caja y Acometida' },
-            { item: '80', desc: 'Colocación de poste de concreto de 12m o 14m' },
-            { item: '1465239', desc: 'POSTE DE HPC/HPV DE 12M x 1030 daN (CR)' }
+            { item: '21', desc: 'Adecuación caja para medidor o caja para alojar display' },
+            { item: '22', desc: 'Colocación de caja hermética para medidor 1F, 2F o 3F fachada' },
+            { item: '23', desc: 'Instalación o cambio de caja y medidor (Medida tecnificada)' },
+            { item: '24', desc: 'Instalación o cambio de caja y medidor (Medida Directa)' },
+            { item: '25', desc: 'Instalación o cambio de caja y medidor (Medida bicuerpo)' },
+            { item: '26', desc: 'Instalación o cambio de medidor (Medida Directa)' },
+            { item: '27', desc: 'Instalación o cambio de medidor (Medida Tecnificada)' },
+            { item: '28', desc: 'Instalación de medidor bicuerpo' },
+            { item: '29', desc: 'Reposición de medidor bicuerpo o display' },
+            { item: '30', desc: 'Pegado de caja medidor' },
+            { item: '31', desc: 'Programación y configuración de Display Mesh' },
+            { item: '32', desc: 'Retiro de caja (gabinete) para alojar medidores concentrados' },
+            { item: '33', desc: 'Retiro o cambio o instalación de medidor en caja concentradora en piso' },
+            { item: '34', desc: 'Reubicación de caja y medidor o display (Medida Directa)' },
+            { item: '35', desc: 'Reubicación de medidor con cambio de acometida' },
+            { item: '36', desc: 'Revisión de Módulo de Energía de 100, 60, 5 A' },
+            { item: '37', desc: 'Revisión del servicio Medida Directa convencional o bicuerpo' },
+            { item: '38', desc: 'Revisión del servicio (Medida Semidirecta)' },
+            { item: '39', desc: 'Revisión del servicio Medida Directa tecnificada' },
+            { item: '40', desc: 'Normalización ultraligera del servicio (masivo)' },
+            { item: '41', desc: 'Normalización ligera del servicio (masivo)' },
+            { item: '42', desc: 'Revisión y normalización de instalaciones en niveles de tensión 2 y 3' },
+            { item: '43', desc: 'Suspensión aérea BT con retiro de acometida' },
+            { item: '44', desc: 'Suspensión en bornera de medidor' },
+            { item: '45', desc: 'Toma de lectura en sitio para medida indirecta' },
+            { item: '46', desc: 'Normalización de la comunicación del medidor del usuario' },
+            { item: '47', desc: 'Verif y transf de datos Microcontrolador-concentrador con Pocket UPC' },
+            { item: '48', desc: 'Verificar tensión y conexion alimentación antena,repetidr o similares' },
+            { item: '49', desc: 'Cambio de acometida en concentrador en cualquier configuración' },
+            { item: '50', desc: 'Instalación de acometida para totalizador de gabinete multifamiliar' },
+            { item: '51', desc: 'Cambio de fuente de poder en concentrador ubicado en gabinete' },
+            { item: '52', desc: 'no se encontro ninguna cohincidencia con el archivo base' },
+            { item: '53', desc: 'Cambio de Micro, Tarjeta de Control y de interconexión en red aérea' },
+            { item: '54', desc: 'Cambio Modulo de 100, 60 o 5A en concentrador ubicado en red aérea' },
+            { item: '55', desc: 'Cambio en config parcial del concentrador de energía con Pocket UPC' },
+            { item: '56', desc: 'Configuración Física Concentrador Secundario o Esclava – Cable RS 485' },
+            { item: '57', desc: 'Configuració Física Concentrador Secundario o Esclava–Radio Frecuencia' },
+            { item: '58', desc: 'Corte drástico en nivel de tensión I o II' },
+            { item: '59', desc: 'Corte drástico en nivel de tensión II con desmonte de transformador' },
+            { item: '60', desc: 'Corte-reinstalación del servicio de Energia en med directa/semidirecta' },
+            { item: '61', desc: 'Inspección previa para instalación de medida semidirecta/ indirecta' },
+            { item: '62', desc: 'Instalación completa del suministro con medida indirecta' },
+            { item: '63', desc: 'Inst completa del suministro con medida semidirecta(TC tip ventana)' },
+            { item: '64', desc: 'Instalación completa del suministro con medida semidirecta' },
+            { item: '65', desc: 'Instalación de macromedidor con medida directa' },
+            { item: '66', desc: 'Amarre en PCI o Multifamiliares' },
+            { item: '67', desc: 'Cambio caja de macromedidor' },
+            { item: '68', desc: 'Cambiar TCs tipo núcleo partido para mantenimiento de macromedidor' },
+            { item: '69', desc: 'Cambiar TCs tipo ventana para mantenimiento de macromedidor' },
+            { item: '70', desc: 'Cambio completo de los cables de  señal en macromedidor' },
+            { item: '71', desc: 'Instalación o cambio de medidor para sistema de medida indirecta' },
+            { item: '72', desc: 'Instalación o cambio de medidor para sistema de medida semidirecta' },
+            { item: '73', desc: 'Reubicación del sistema de medida semidirecta' },
+            { item: '74', desc: 'Reposición de caja hermética y medidor de macromedida' },
+            { item: '75', desc: 'Traslado de medidor e instalación de Modem' },
+            { item: '76', desc: 'Instalación o cambio de Modem' },
+            { item: '77', desc: 'Instalación de Macromedidor con Modem con TC´s tipo ventana' },
+            { item: '78', desc: 'Instalación de Macromedidor con Modem con TC´s de núcleo abierto' },
+            { item: '79', desc: 'Adecuación y/o Reparación de Modem para Macromedidor' },
+            { item: '80', desc: 'Colocación de poste de concreto 12m-2500-1600-1324-1030-735-500 daN' },
+            { item: '81', desc: 'Colocación de poste de concreto 8, 9 o 10m – 1.324 1.030,735 o 500 daN' },
+            { item: '82', desc: 'Colocación de poste de fibra 12,14m -1.600, 1.324, 1.030, 735 /500 daN' },
+            { item: '83', desc: 'Colocación de Poste FV de 8,9 o 10m - 1.600,1.324,1.030,735 o 500 daN' },
+            { item: '84', desc: 'Aplomar poste existente 12, 14 o 16m' },
+            { item: '85', desc: 'Aplomar poste existente 8, 9 o 10m' },
+            { item: '86', desc: 'Reubicación de poste de concreto 12 o 14m' },
+            { item: '87', desc: 'Reubicación de poste de concreto 8, 9 o 10m' },
+            { item: '88', desc: 'Concreto Fc=210kgf/cm2 fundición para poste' },
+            { item: '89', desc: 'Colocación del sistema de puesta a tierra' },
+            { item: '90', desc: 'Colocación de soporte para transformador "TUTO"' },
+            { item: '91', desc: 'Instalación de transformador monofásico 25 kVA a 75 kVA y accesorios' },
+            { item: '92', desc: 'Instalación de transformador monofásico de 3kVA a 15kVA y accesorios' },
+            { item: '93', desc: 'Instalación de transformador 3F de 30,45,75,112.5,150kVA y accesorios' },
+            { item: '94', desc: 'Maniobra de apertura y cierre' },
+            { item: '95', desc: 'Cambio de barraje secundario a transformador monofásico o bifásico' },
+            { item: '96', desc: 'Cambio de barraje secundario a transformador trifásico' },
+            { item: '97', desc: 'Colocación de caja portabornera de 4, 6 o de 8 salidas' },
+            { item: '98', desc: 'Colocación de caja primaria o pararrayos' },
+            { item: '99', desc: 'Colocación de fusible' },
+            { item: '100', desc: 'Colocación de adecuación poste en alineación para 13.2kV' },
+            { item: '101', desc: 'Colocación de adecuación poste en ángulo para 13.2kV' },
+            { item: '102', desc: 'Colocación de adecuación poste en referencia para 13.2kV' },
+            { item: '103', desc: 'Colocación de adecuación poste en terminal para 13.2kV' },
+            { item: '104', desc: 'Colocación de adecuación poste en alineación secundario' },
+            { item: '105', desc: 'Colocación de adecuación poste en ángulo secundario' },
+            { item: '106', desc: 'Colocación de adecuación poste en referencia secundario' },
+            { item: '107', desc: 'Colocación de adecuación poste fin de línea secundario' },
+            { item: '108', desc: 'Colocación de cruceta y tiranta o diagonal' },
+            { item: '109', desc: 'Colocación de estribo  en red primaria (1 unidad)' },
+            { item: '110', desc: 'Colocación de estribo en red primaria (2 unidades)' },
+            { item: '111', desc: 'Colocación de estribo en red primaria (3 unidades)' },
+            { item: '112', desc: 'Conector amovible' },
+            { item: '113', desc: 'Colocación de aislador tipo pin- suspensión o line post' },
+            { item: '114', desc: 'Coloc viento poste aux para red 13.2-34.5kV, incluy instal poste aux' },
+            { item: '115', desc: 'Coloc viento Tip Bandera "Fn" red 13.2, incluy instal poste aux' },
+            { item: '116', desc: 'Coloc viento Tip Bandera "Fn" red 13.2, en Configuración Especial' },
+            { item: '117', desc: 'Colocación de viento convencional o farol para red de 13.2kV y 34.5 kV' },
+            { item: '118', desc: 'Colocación de viento convencional o farol para red secundaria' },
+            { item: '119', desc: 'Retempla de viento' },
+            { item: '120', desc: 'Colocación de aisladero en línea monofásica- 7,6kV' },
+            { item: '121', desc: 'Colocación juego de aisladero en línea bifásica- 13,2 kV' },
+            { item: '122', desc: 'Colocación juego de aisladero en línea trifásica- 13,2 kV' },
+            { item: '123', desc: 'Tendida de línea primaria aérea 1F cubierta 1h ACSR #2 AWG, CF63-CF125' },
+            { item: '124', desc: 'Tendida de línea primaria aérea 2F cubierta 2h ACSR #2 AWG, CF63-CF125' },
+            { item: '125', desc: 'Tendida de línea primaria aérea 3F cubierta 3h ACSR #2 AWG, CF63-CF125' },
+            { item: '126', desc: 'Tendida de línea primaria aérea 1F-desnuda-1 hilo ACSR#2 ,1/0 o 4/0AWG' },
+            { item: '127', desc: 'Tendida de línea primaria aérea 2F-desnuda-2 hilo ACSR#2 ,1/0 o 4/0AWG' },
+            { item: '128', desc: 'Tendida de línea primaria aérea 3F-desnuda-3 hilo ACSR#2 ,1/0 o 4/0AWG' },
+            { item: '129', desc: 'Retempla de línea primaria 1 hilo (red existente)' },
+            { item: '130', desc: 'Retempla de línea primaria 2 hilos (red existente)' },
+            { item: '131', desc: 'Retempla de línea primaria 3 hilos (red existente)' },
+            { item: '132', desc: 'Cruce aéreo puente entre redes aéreas MT' },
+            { item: '133', desc: 'Tendido cable mensaje(acero galva) acometida en red chilena o especial' },
+            { item: '134', desc: 'Tendido de trenza en configuración especial (cuarto hilo)' },
+            { item: '135', desc: 'Tendido de trenza normal' },
+            { item: '136', desc: 'Vestidas en baja configuración especial Alineación' },
+            { item: '137', desc: 'Vestidas en baja configuración especial Ángulo' },
+            { item: '138', desc: 'Vestidas en baja configuración especial Fin de línea' },
+            { item: '139', desc: 'Vestidas en baja configuración especial Referencia' },
+            { item: '140', desc: 'Vestidas en baja configuración Red Chilena Alineación' },
+            { item: '141', desc: 'Vestidas en baja configuración Red Chilena Ángulo' },
+            { item: '142', desc: 'Vestidas en baja configuración Red Chilena Fin de línea' },
+            { item: '143', desc: 'Vestidas en baja configuración Red Chilena Referencia' },
+            { item: '144', desc: 'Vestidas en baja configuración trenza normal Alineación' },
+            { item: '145', desc: 'Vestidas en baja configuración trenza normal Ángulo' },
+            { item: '146', desc: 'Vestidas en baja configuración trenza normal Fin de línea' },
+            { item: '147', desc: 'Vestidas en baja configuración trenza normal Referencia' },
+            { item: '148', desc: 'Marcación de circuitos y/o elementos asociados al sistema distribución' },
+            { item: '149', desc: 'Empalme con conector de perforación' },
+            { item: '150', desc: 'Cruce aéreo puente entre redes aéreas de baja tensión' },
+            { item: '151', desc: 'Retempla de línea secundaria (red existente)' },
+            { item: '152', desc: 'Conexión y empalme de usuarios subnormales en actividades de Blindaje' },
+            { item: '153', desc: 'Excavación en vía' },
+            { item: '154', desc: 'Excavación en zona verde' },
+            { item: '155', desc: 'Reparación de andén' },
+            { item: '156', desc: 'Traslado de 1 hilo de línea primaria' },
+            { item: '157', desc: 'Traslado de acometida teléfonos y cableoperador' },
+            { item: '158', desc: 'Traslado de adecuación monohilo o dos hilos en poste' },
+            { item: '159', desc: 'Traslado de adecuación trifásica en poste, para cualquier calibre' },
+            { item: '160', desc: 'Traslado de adecuación punto de operador de comunicación' },
+            { item: '161', desc: 'Traslado de adecuación salida de circuito 13.2kV, cualquier calibre' },
+            { item: '162', desc: 'Traslado de adecuación secundaria en poste' },
+            { item: '163', desc: 'Traslado de caja portabornera' },
+            { item: '164', desc: 'Traslado de bajante primario' },
+            { item: '165', desc: 'Traslado de caja primaria o pararrayos para 13.2kV o 34.5kV' },
+            { item: '166', desc: 'Traslado de línea secundaria aérea en trenza' },
+            { item: '167', desc: 'Traslado de luminaria' },
+            { item: '168', desc: 'Traslado trafo distribución 1F o 2F con accesorios capacidades 3-75kVA' },
+            { item: '169', desc: 'Traslado de trafo distribución 3F-Switces-reguladores o reconectadores' },
+            { item: '170', desc: 'Retiro de 1 hilo línea primaria' },
+            { item: '171', desc: 'Retiro de adecuación monohilo o dos hilos red primaria en poste' },
+            { item: '172', desc: 'Retiro de adecuación secundaria en poste' },
+            { item: '173', desc: 'Retiro de adecuación trifásica red primaria en poste' },
+            { item: '174', desc: 'Retiro de aislador tipo pin- suspensión o line post' },
+            { item: '175', desc: 'Retiro de caja hermética en cruceta' },
+            { item: '176', desc: 'Retiro de caja primaria o pararrayos' },
+            { item: '177', desc: 'Retiro de cruceta y tiranta o diagonal' },
+            { item: '178', desc: 'Retiro de línea secundaria abierta (por conductor)' },
+            { item: '179', desc: 'Retiro de línea secundaria aérea en cable de potencia ' },
+            { item: '180', desc: 'Retiro de portabornera' },
+            { item: '181', desc: 'Retiro de poste de concreto 12 o 14m (todas las referencias)' },
+            { item: '182', desc: 'Retiro de poste de concreto 8, 9 o 10m (todas las referencias)' },
+            { item: '183', desc: 'Retiro de poste de fibra 12 o 14m (todas las referencias)' },
+            { item: '184', desc: 'Retiro de poste de fibra 8, 9 o 10m (todas las referencias)' },
+            { item: '185', desc: 'Retiro de poste de madera' },
+            { item: '186', desc: 'Retiro de trafo de distribución 1F, 2F y accesorios' },
+            { item: '187', desc: 'Retiro de trafo trifásico/suiches/reguladores o reconectadores' },
+            { item: '188', desc: 'Retiro de viento' },
+            { item: '189', desc: 'Conex. y leg. inst. const. por part. portabornera o vano de la red' },
+            { item: '190', desc: 'Conexión y legalización de instala construida particular caja hermétic' },
+            { item: '191', desc: 'Declaración cumplimient RETIE instalaciones intern ejecutadas terceros' },
+            { item: '192', desc: 'Repl de acciones de HV de servicios nuevos o revisión y sellado' },
+            { item: '193', desc: 'Actividad de instalación de red interna (HV)' },
+            { item: '194', desc: 'Instalación"pase"alambre Cu2x8+1x10AWG,THW ó 1x8+1x8CuTHW Empotrado' },
+            { item: '195', desc: 'Instalación"pase"alambre Cu 2x8+1x10 AWG,THW ó 1x8+1x8 Cu THW Expuesto' },
+            { item: '196', desc: 'Instalación y suministro de puesta a tierra (Habilitación vivienda)' },
+            { item: '197', desc: 'Instalación y suministro de tablero de distribución 4 ctos empotrado.' },
+            { item: '198', desc: 'Instalación de tablero de distribución 4 circuitos expuesto.' },
+            { item: '199', desc: 'Instalación de 1 break 30A,120V,3KA, 1polo tablero distribución 4ctos ' },
+            { item: '200', desc: 'Instalación y suministro de breaker 30A 120V 3KA, 1 polo en tablero' },
+            { item: '201', desc: 'Instalación expuesta caja plástica 2*4, incluy element sujeción' },
+            { item: '202', desc: 'Instalación expuesta caja plástica octogonal,incluy element sujeción' },
+            { item: '203', desc: 'Instalación expuesta y suministro de cable flexible de CU 3x12 AWG NM.' },
+            { item: '204', desc: 'Instalación expuesta y suministro de cable flexible de CU 3x14 AWG NM.' },
+            { item: '205', desc: 'Instalación expuesta de Interruptor manual,incluyendo element sujeción' },
+            { item: '206', desc: 'Instalación expuesta de portalámparas de loza, incluy element sujeción' },
+            { item: '207', desc: 'Instalación expuesta de tomacorriente doble, incluy elementsujeción' },
+            { item: '208', desc: 'Instalación expuesta tomacorriente GFCI, incluyendo elementos sujeción' },
+            { item: '209', desc: 'Retiro de elementos existentes (cajas, interruptores o tomas)' },
+            { item: '210', desc: 'Actividad de replanteo al sistema de medida' },
+            { item: '211', desc: 'Lect en sitio de med intelig cualquier punto de medic con equipo local' },
+            { item: '212', desc: 'Rev y norm de fallas en la infraestructura de telecomunicaciones AMI' },
+            { item: '213', desc: 'Instalación access point o extensor RF Mesh' },
+            { item: '214', desc: 'Inst de punto red -Backhaul access point RF Mesh/concen. PLC PP/MultiP' },
+            { item: '215', desc: 'Inst de punto red - Backhaul red LTE con alimentación eléctrica y SPT' },
+            { item: '216', desc: 'Inst de concent. PLC en poste/terraza punto aliment. eléctrica y SPT' },
+            { item: '217', desc: 'Inst pto red  Backhaul para accesspoint RF MESH /conc. PLC-red Fbr Opt' },
+            { item: '218', desc: 'Act. verificación, revisión y normalización de instalaciones en frio' },
+            { item: '219', desc: 'Actividades de redes en altura con carro tipo canasta' },
+            { item: '220', desc: 'Act. de verificación, revisión y normalización de inst. en tensión' },
+            { item: '221', desc: 'Act comple coordinación de trabajos en redes aéreas energía eléctrica' },
+            { item: '222', desc: 'Act. compl de apoyo a la construcción de redes aéreas en piso (Aux)' },
+            { item: '223', desc: 'Act complement apoy construcción redes aéreas de energía en piso' },
+            { item: '224', desc: 'Actividades de adecuación de redes energizada con equipo de línea viva' },
+            { item: '225', desc: 'Bodega adicional' },
+            { item: '226', desc: 'Actividades de revisión y normalización (Brigada Elite)' },
+            { item: '227', desc: 'Inspección de instalaciones con DRONE' },
+            { item: '228', desc: 'Gestión social integral para la reducción de pérdidas de energía' },
+            { item: '229', desc: 'Actividades de poda y descope de árboles' },
+            { item: '230', desc: 'Recolección y disposición final de troncos y ramas' },
+            { item: '231', desc: 'Transporte de medidores en paquete de 0  a 200 kg con estino a Bogota' },
+            { item: '232', desc: 'Trans. medidores en paquete de  0 a 200 Kg con destino a Cartagena' },
+            { item: '233', desc: 'Transporte de medidores en paquete de 0 a 200 kg con destino a Cali' },
+            { item: '234', desc: 'Transporte de medidores en paquete de 0 a 200 kg destino a Medellín' },
+            { item: '1810891', desc: 'ABRAZADERA 200MM UNA SALIDA P/TRANSFORMA' },
+            { item: '1810892', desc: 'ABRAZADERA 250MM UNA SALIDA P/TRANSFORMA' },
+            { item: '1464245', desc: 'ABRAZADERA DOBLE DE 180MM DE 2 SALIDAS' },
+            { item: '1464250', desc: 'ABRAZADERA DOBLE DE 200MM DE 2 SALIDAS' },
+            { item: '1464252', desc: 'ABRAZADERA DOBLE DE 220MM DE 2 SALIDAS' },
+            { item: '1810890', desc: 'ABRAZADERA DE 250 MM DE 2 SALIDAS' },
+            { item: '1441249', desc: 'AISLADOR POLIMERICO SUSP 13.2KV' },
+            { item: '1810234', desc: 'AISLADOR COMPOSITE SUSP 13.2KV ANSI-DS28' },
+            { item: '1810569', desc: 'AISLADOR DE POLIETILENO TIPO PIN 55-3' },
+            { item: '1810570', desc: 'AISLADOR DE POLIETILENO TIPO PIN 55-6' },
+            { item: '1437805', desc: 'AISLADOR PORCELANA CARRETE ANSI 53-2' },
+            { item: '1436991', desc: 'AISLADOR PORCELANA POST 13.2KV ANSI 57-1' },
+            { item: '1707561', desc: 'AISLADOR PORCELANA TENSOR 3/8 ANSI 54-2' },
+            { item: '1808488', desc: 'ALAMBRE DE ALUMINIO AISLADO N: 8 AWG 600V' },
+            { item: '1707868', desc: 'ANCLA DE HORMIGON' },
+            { item: '1441264', desc: 'ARANDELA CURVA CUADRADA 2-1/4X2-1/4X3/16' },
+            { item: '1464552', desc: 'ARANDELA DE FE GALV. DE 4 X 4 X 3/4' },
+            { item: '1440944', desc: 'ARANDELA PLANA REDONDA 5/8' },
+            { item: '1458594', desc: 'ARANDELA DE PRESION AC.INOX. 1/2' },
+            { item: '1458595', desc: 'ARANDELA PLANA REDONDA AC.INOX. 1/2' },
+            { item: '1529859', desc: 'BASE CORTACIRCUITO FUSIBLE 27KV 200A' },
+            { item: '1436978', desc: 'CABLE ACSR DESNUDO 1/0 AWG' },
+            { item: '1930054', desc: 'CABLE AAAC DESNUDO 123,3 MCM' },
+            { item: '1722105', desc: 'CABLE FORRADO CF 63 - 13.2KV' },
+            { item: '1458524', desc: 'CABLE TRENZA-TRIPLEX 1/0AAC-1/0AAAC BT' },
+            { item: '1458525', desc: 'CABLE TRENZA-TRIPLEX 4/0AAC-4/0AAAC BT' },
+            { item: '1434435', desc: 'CABLE ACERO GALVANIZADO P/RETENIDA 3/8' },
+            { item: '1808482', desc: 'CABLE DESNUDO COPPER CLAD 7H#8AWG 3/8' },
+            { item: '1916210', desc: 'CABLE AL CONCENTRICO AL 2X4+6 75A 600V' },
+            { item: '1475237', desc: 'CABLE CONTROL 6X12 600V' },
+            { item: '1434470', desc: 'CABLE CU DESNUDO 7 HILOS #2' },
+            { item: '1551558', desc: 'CAJA POLIESTER DERIVACION 9SAL-1F 1000V' },
+            { item: '2000206', desc: 'CAJA PLASTICA MED BICUERPO 4PUESTO 1F-3H' },
+            { item: '2000205', desc: 'CAJA PLASTICA MED BICUERPO 6PUESTO 1F-3H' },
+            { item: '1475157', desc: 'CAJA POLICARBONATO MED ELECT. TIPO 1' },
+            { item: '1459401', desc: 'CAJA POLICARBONATO MEDIDOR TIPO 1 Y 2' },
+            { item: '1464735', desc: 'CAJA POLICARBONATO MED TIPO 3 Y 4' },
+            { item: '1475368', desc: 'CINTA DE 3/4MM ACERO INOXID. ALTA CONTAM' },
+            { item: '1454857', desc: 'CONECTOR AMOVIBLE(P:2-2/0ACSR-D:6-2/0CU)' },
+            { item: '1437603', desc: 'CONECTOR CUÑA PRESION C/ESTRIBO 1/0(123)' },
+            { item: '1699901', desc: 'CONECTOR COMPRESION CU #2-#2' },
+            { item: '1531537', desc: 'CONECTOR COMPRESION PICA PT' },
+            { item: '1808483', desc: 'CONECTOR CUÑA PAT 5/8" P/CABLE(CCS' },
+            { item: '1437596', desc: 'CONECTOR CUÑA (P:1/0-D:1/0)(P:123-D:123)' },
+            { item: '1525792', desc: 'CONECTOR CUÑA (P:4/0-D:1/0)(P:246-D:123)' },
+            { item: '1525791', desc: 'CONECTOR CUÑA (P:4/0-D:4/0)(P:246-D:246)' },
+            { item: '1703753', desc: 'CONECTOR PERFORACION(P:1/0-4/0-D:1/0-4/0' },
+            { item: '1809021', desc: 'CONECTOR TERMINAL PLET. 1/0 2PERF B.LARG' },
+            { item: '1809022', desc: 'CONECTOR TERMINAL PLET. 4/0 2PERF B.LARG' },
+            { item: '1551265', desc: 'CRUCETA METALICA ANGULAR 1400MM' },
+            { item: '1551267', desc: 'CRUCETA METALICA ANGULAR 2400MM' },
+            { item: '1931053', desc: 'CRUCETA METALICA BANDERA 2400MM' },
+            { item: '1464431', desc: 'DIAGONAL ANGULAR 7\' (PIES)' },
+            { item: '1931077', desc: 'FUSIBLE EXPULSIÓN 2A TP D' },
+            { item: '1474072', desc: 'FUSIBLE EXPULSIÓN 3A TP D' },
+            { item: '1474074', desc: 'FUSIBLE EXPULSIÓN 5A TP D' },
+            { item: '1440860', desc: 'GRAPA CONEXIÓN CABLE TIERRA S/TORN 5/8' },
+            { item: '1465349', desc: 'GRAPA PRENSORA 3 TORNILLOS 5/8 ACER GAL' },
+            { item: '1450949', desc: 'GRAPA DE RETENCION RECTA ALUMINIO 1/0AWG' },
+            { item: '1450950', desc: 'GRAPA RETENCION RECTA AL 4/0AWG-266MCM' },
+            { item: '1551418', desc: 'GRILLETE LARGO RECTO 5/8 11 300 KG' },
+            { item: '1458467', desc: 'GUARDACABOS P/RETENCION CABLE ACERO 3/8' },
+            { item: '1465067', desc: 'HEBILLA ACERO INOX. PARA CINTA 3/4MM' },
+            { item: '1932111', desc: 'MED E2DC 240V 10(A) 60HZ A10' },
+            { item: '1464705', desc: 'PERNO DE CARRUAJE DE 5/8 X 3' },
+            { item: '1464856', desc: 'PERNO DE CARRUAJE DE 5/8 X 6' },
+            { item: '1551282', desc: 'PERNO ROSCA CORRIDA AC.GALV. 5/8X12' },
+            { item: '1450114', desc: 'PERNO ROSCA CORRIDA AC.GALV. 5/8X20' },
+            { item: '1458662', desc: 'PLETINA SUJECION PARA RETENIDAS' },
+            { item: '1459733', desc: 'POSTE HPC/HPV 9MX500 DAN(CR)' },
+            { item: '1807941', desc: 'POSTE HPC/HPV 9MX735 DAN(CR)' },
+            { item: '1807940', desc: 'POSTE HPC/HPV 9MX1030 DAN(CR)' },
+            { item: '1475174', desc: 'POSTE HPC/HPV 12MX735 DAN(CR)' },
+            { item: '1465239', desc: 'POSTE HPC/HPV 12MX1030 DAN(CR)' },
+            { item: '1807947', desc: 'POSTE HPC/HPV 12MX1324 DAN(CR)' },
+            { item: '2000070', desc: 'POSTE HPC/HPV 12MX1600 DAN(CR)' },
+            { item: '1931817', desc: 'POSTE FIBRA VIDRIO 9MX500 DAN(CR)' },
+            { item: '2000074', desc: 'POSTE FIBRA VIDRIO 9MX735 DAN(CR)' },
+            { item: '2000295', desc: 'POSTE FIBRA VIDRIO 9MX1030 DAN(CR)' },
+            { item: '1931407', desc: 'POSTE FIBRA VIDRIO 12MX500 DAN(CR)' },
+            { item: '1918420', desc: 'POSTE FIBRA VIDRIO 12MX735 DAN(CR)' },
+            { item: '2000075', desc: 'POSTE FIBRA VIDRIO 12MX1030 DAN(CR)' },
+            { item: '1437713', desc: 'RETENC PREF OMEG DOB 57/1-3 ACSR1/0' },
+            { item: '1458466', desc: 'RETENC PREF TERMINAL CABLE AC-3/8' },
+            { item: '1437707', desc: 'RETENC PREF Z 57/1-3 ACSR.1/0' },
+            { item: '1810564', desc: 'RETENCION PREFORMADA 15KV CF63(123AAAC)' },
+            { item: '1817327', desc: 'SELLO ROTO SEAL AZUL (P/MED. ESPECIAL)' },
+            { item: '1479092', desc: 'SOPORTE EN U RED BT TRENZADA EN CRUCETA' },
+            { item: '1437806', desc: 'SOPORTE HORQUILLA P/AISLADOR TP CARRETE' },
+            { item: '1551556', desc: 'SOPORTE P/SECC FUSIB. EN CRUCETA ANGULAR' },
+            { item: '1931570', desc: 'SPT BT ACERO INOX. AUSTENITICO POSTE 9M' },
+            { item: '1917369', desc: 'SPT MT ACERO INOX AUSTENITICO POSTE 12M' },
+            { item: '2000360', desc: 'TC (BT) NUCLEO PARTIDO 300/5A CLASE 1EXT' },
+            { item: '1458484', desc: 'TORNILLO AC.GALVANIZ.C.T.5/8X3' },
+            { item: '1437647', desc: 'TORNILLO AC.GALVANIZ.C.T.5/8X6' },
+            { item: '1437651', desc: 'TORNILLO AC.GALVANIZ.C/T 5/8X12' },
+            { item: '1437658', desc: 'TORNILLO AC.GALVANIZ.CON OJO.C.T.5/8X12' },
+            { item: '1458593', desc: 'TORNILLO AC.INOXIDABLE/EXAG.C.T.1/2X2' },
+            { item: '2000388', desc: 'TORNILLO TRIANGULAR PARA CAJA' },
+            { item: '1475277', desc: 'TRAFO CONV. 1F 25KVA 13.2KV' },
+            { item: '1446119', desc: 'TRAFO CONV 1F 37.5KVA 13.2KV' },
+            { item: '1475278', desc: 'TRAFO CONV. 1F 50KVA 13.2KV' },
+            { item: '1475279', desc: 'TRAFO CONV. 1F 75KVA 13.2KV' },
+            { item: '1529928', desc: 'TUBO PORTAFUSIBLE EXP. 27KV 100A' },
+            { item: '1811290', desc: 'TUBO ABIERTO SEÑALIZACION Y PROTECCION DE RETENIDAS 25 MM' },
+            { item: '1437661', desc: 'TUERCA DE OJO ACERO GALVANIZADO 5/8' },
+            { item: '1437659', desc: 'TUERCA EXAGONAL ACERO GALV. 5/8' },
+            { item: '1458479', desc: 'VARILLA ANCLAJE DE OJO C.T. 3/4X8' },
+            { item: '1525655', desc: 'VARILLA DE PUESTA A TIERRA 5/8X8' },
+            { item: '1310002', desc: 'CEMENTO GRIS' },
+            { item: '100108', desc: 'CAJAS NANSEN CONCENTRADORAS' },
+            { item: '100110', desc: 'SOPORTE ANGULO .6 MTS' },
+            { item: '100109', desc: 'SOPORTE ANGULO 1,20 MTS' },
+            { item: 'F11415', desc: '2X20 AWG CU DUPLEX SPT-C 300V60C' }
         ];
 
         let obraActualId = null;
@@ -955,51 +1246,6 @@
             }
         }
 
-        function descargarPlantillaItems() {
-            let csvContent = "data:text/csv;charset=utf-8,Item,Descripcion\n1,Inspeccion Servicio Medida Directa\n2,Instalacion completa del suministro";
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "plantilla_items.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function importarItemsExcel(event) {
-            let file = event.target.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                let text = e.target.result;
-                let lines = text.split("\n");
-                let count = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if (!line) continue;
-                    let parts = line.split(',');
-                    if (parts.length >= 2) {
-                        let itemCode = parts[0].replace(/"/g, '').trim();
-                        let itemDesc = parts.slice(1).join(',').replace(/"/g, '').trim();
-                        if (itemCode && itemDesc) {
-                            let existing = itemsMaster.find(im => im.item === itemCode);
-                            if (existing) {
-                                existing.desc = itemDesc;
-                            } else {
-                                itemsMaster.push({ item: itemCode, desc: itemDesc });
-                            }
-                            count++;
-                        }
-                    }
-                }
-                guardarDatosLocal();
-                renderizarItemsMaster();
-                alert(`Se importaron/actualizaron ${count} ítems correctamente.`);
-                event.target.value = '';
-            };
-            reader.readAsText(file);
-        }
-
         function exportarExcel(obraId) {
             let obra = obras.find(o => o.id === obraId);
             let lista = registros[obraId] || [];
@@ -1010,7 +1256,7 @@
 
             let csvContent = "data:text/csv;charset=utf-8,Estacion,Item,Descripcion,Cantidad,Fecha,N. Descargo,Serie\n";
             lista.forEach(r => {
-                let row = [r.estacion, `"${r.item}"`, `"${r.descripcon || r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo || ''}"`, `"${r.serie || ''}"`];
+                let row = [r.estacion, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo || ''}"`, `"${r.serie || ''}"`];
                 csvContent += row.join(",") + "\n";
             });
 
