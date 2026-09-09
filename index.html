@@ -328,7 +328,7 @@
                         <th>Descripción</th>
                         <th>Cant.</th>
                         <th>Fecha Descargo</th>
-                        <th>Series / Obs</th>
+                        <th>Series</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -640,18 +640,19 @@
             let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase();
             let filtroEstacion = document.getElementById('filtro-estacion-select').value;
 
-            let filtrados = lista.filter(r => {
-                let matchItem = r.item.toLowerCase().includes(filtroItem) || r.descripcion.toLowerCase().includes(filtroItem);
-                let matchEstacion = filtroEstacion === "" || r.estacion === filtroEstacion;
+            // Filtramos conservando los índices originales para poder moverlos con precisión
+            let filtradosConIndex = lista.map((reg, index) => ({ reg, index })).filter(({ reg }) => {
+                let matchItem = reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
+                let matchEstacion = filtroEstacion === "" || reg.estacion === filtroEstacion;
                 return matchItem && matchEstacion;
             });
 
-            if (filtrados.length === 0) {
+            if (filtradosConIndex.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777;">No hay registros cargados.</td></tr>`;
                 return;
             }
 
-            filtrados.forEach((reg) => {
+            filtradosConIndex.forEach(({ reg, index }) => {
                 let esTresCifras = reg.item.trim().length === 3;
                 let claseVerde = esTresCifras ? 'highlight-green' : '';
 
@@ -664,12 +665,28 @@
                     <td>${reg.fecha}</td>
                     <td>${reg.serie || reg.ndescargo || ''}</td>
                     <td>
-                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:8px;" title="Editar Registro"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar Registro"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="moverFila(${index}, -1)" style="background:none; border:none; color:#333; cursor:pointer; margin-right:4px;" title="Mover Arriba"><i class="fa-solid fa-arrow-up"></i></button>
+                        <button onclick="moverFila(${index}, 1)" style="background:none; border:none; color:#333; cursor:pointer; margin-right:8px;" title="Mover Abajo"><i class="fa-solid fa-arrow-down"></i></button>
+                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function moverFila(index, direccion) {
+            let lista = registros[obraActualId];
+            let nuevoIndex = index + direccion;
+            if (nuevoIndex < 0 || nuevoIndex >= lista.length) return; // Fuera de límites
+            
+            // Intercambiar posiciones
+            let temp = lista[index];
+            lista[index] = lista[nuevoIndex];
+            lista[nuevoIndex] = temp;
+
+            guardarDatosLocal();
+            renderizarRegistros();
         }
 
         function limpiarFiltroFecha() {
