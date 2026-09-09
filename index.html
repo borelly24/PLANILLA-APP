@@ -262,14 +262,16 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            white-space: nowrap;
-            font-size: 0.85rem;
-            position: relative; /* Asegura el contexto de posicionamiento */
+            table-layout: fixed; /* Clave para que respete los anchos y no se desborde */
+            font-size: 0.8rem;
+            position: relative;
         }
         th, td {
-            padding: 10px;
+            padding: 8px 6px;
             border: 1px solid #ddd;
             text-align: left;
+            word-wrap: break-word;     /* Permite que el texto largo baje de línea */
+            overflow-wrap: break-word; /* Soporte moderno para salto de línea */
         }
         th { 
             background-color: var(--primary-color); 
