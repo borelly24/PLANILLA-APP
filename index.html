@@ -697,11 +697,12 @@
             tbody.innerHTML = '';
             let lista = registros[obraActualId] || [];
 
-            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase();
+            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
             let filtroEstacion = document.getElementById('filtro-estacion-select').value;
 
             let filtradosConIndex = lista.map((reg, index) => ({ reg, index })).filter(({ reg }) => {
-                let matchItem = reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
+                // Búsqueda exacta por código de ítem o coincidencia en la descripción
+                let matchItem = (filtroItem === "") || (reg.item.toLowerCase().trim() === filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
                 let matchEstacion = filtroEstacion === "" || reg.estacion === filtroEstacion;
                 return matchItem && matchEstacion;
             });
@@ -720,7 +721,6 @@
                 tr.draggable = true;
                 tr.dataset.index = index;
 
-                // El tirador de arrastre se coloca en la primera celda (Estación)
                 tr.innerHTML = `
                     <td>
                         <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
@@ -813,10 +813,14 @@
 
         function cerrarModalRegistro() { document.getElementById('modal-registro').classList.remove('show'); }
 
+        // BÚSQUEDA EXACTA DE DESCRIPCIÓN POR CÓDIGO DE ÍTEM
         function autocompletarDescripcion(itemCode) {
-            let encontrado = itemsMaster.find(i => i.item === itemCode.trim());
+            let codigoLimpio = itemCode.trim();
+            let encontrado = itemsMaster.find(i => i.item.trim() === codigoLimpio);
             if (encontrado) {
                 document.getElementById('reg-descripcion').value = encontrado.desc;
+            } else {
+                document.getElementById('reg-descripcion').value = '';
             }
         }
 
@@ -873,7 +877,8 @@
         function renderizarItemsMaster(filtro = '') {
             let tbody = document.getElementById('tabla-items-master');
             tbody.innerHTML = '';
-            let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
+            let filtroLimpio = filtro.toLowerCase().trim();
+            let filtrados = itemsMaster.filter(i => i.item.toLowerCase().trim() === filtroLimpio || i.desc.toLowerCase().includes(filtroLimpio));
 
             filtrados.forEach(item => {
                 let tr = document.createElement('tr');
