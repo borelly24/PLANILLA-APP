@@ -35,15 +35,26 @@
         header h1 { font-size: 1.2rem; }
         .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
 
-        /* Botonera Superior de Exportación / Carga en Vista Principal */
+        /* Botonera Superior de Exportación / Carga en Vista Principal (Oculta por defecto) */
         .top-actions-bar {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        .top-actions-row {
             display: flex;
             gap: 8px;
-            margin-bottom: 10px;
         }
         .btn-top-action {
             flex: 1;
-            background-color: #fff;
+            background-color: #f9f9f9;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             padding: 8px 10px;
@@ -325,20 +336,26 @@
     <div id="main-view" class="view active">
         <header>
             <h1>PLANILLA APP</h1>
-            <i class="fa-solid fa-bolt"></i>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button onclick="toggleTopActions()" style="background: none; border: none; color: white; font-size: 1.1rem; cursor: pointer;" title="Opciones de Respaldo / Carga"><i class="fa-solid fa-database"></i></button>
+                <i class="fa-solid fa-bolt"></i>
+            </div>
         </header>
 
-        <!-- ACCESOS RÁPIDOS DE RESPALDO / COMPARTIR -->
-        <div class="top-actions-bar" style="margin-top: 15px;">
-            <button class="btn-top-action" onclick="abrirModalExportarObra()">
-                <i class="fa-solid fa-file-export" style="color: #0277bd;"></i> Exportar Obra
-            </button>
-            <button class="btn-top-action" onclick="exportarTodoJSON()">
-                <i class="fa-solid class fa-database" style="color: #2e7d32;"></i> Exportar Todo
-            </button>
-            <button class="btn-top-action" onclick="document.getElementById('input-cargar-json').click()">
-                <i class="fa-solid fa-file-import" style="color: #c62828;"></i> Cargar Obra
-            </button>
+        <!-- ACCESOS RÁPIDOS DE RESPALDO / COMPARTIR (OCULTOS POR DEFECTO) -->
+        <div class="top-actions-bar" id="top-actions-bar">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 4px;">OPCIONES DE DATOS Y RESPALDO</div>
+            <div class="top-actions-row">
+                <button class="btn-top-action" onclick="abrirModalExportarObra()">
+                    <i class="fa-solid fa-file-export" style="color: #0277bd;"></i> Exportar Obra
+                </button>
+                <button class="btn-top-action" onclick="exportarTodoJSON()">
+                    <i class="fa-solid fa-database" style="color: #2e7d32;"></i> Exportar Todo
+                </button>
+                <button class="btn-top-action" onclick="document.getElementById('input-cargar-json').click()">
+                    <i class="fa-solid fa-file-import" style="color: #c62828;"></i> Cargar Obra
+                </button>
+            </div>
             <input type="file" id="input-cargar-json" accept=".json" style="display: none;" onchange="cargarObraJSON(event)">
         </div>
 
@@ -931,6 +948,17 @@
 
         function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
         function cerrarFabMenu() { document.getElementById('fab-menu').classList.remove('show'); }
+        
+        // Función para mostrar u ocultar la botonera superior de respaldo
+        function toggleTopActions() {
+            const bar = document.getElementById('top-actions-bar');
+            if (bar.style.display === 'flex') {
+                bar.style.display = 'none';
+            } else {
+                bar.style.display = 'flex';
+            }
+        }
+
         function volverPrincipal() { cambiarVista('main-view'); renderizarObras(); }
         function abrirVistaItems() { cambiarVista('items-view'); renderizarItemsMaster(); }
 
@@ -1090,17 +1118,13 @@
                     // Validar si es una obra individual o un respaldo completo
                     if (contenido.esObraIndividual && contenido.obra) {
                         let nuevaObra = contenido.obra;
-                        // Generar nuevo ID para evitar colisiones si ya existe una obra con ese ID
-                        let idOriginal = nuevaObra.id;
                         let nuevoId = Date.now();
                         nuevaObra.id = nuevoId;
                         nuevaObra.ultimaMod = Date.now();
 
-                        // Verificar si el proyecto ya existe en la lista para renombrarlo levemente o actualizarlo
                         obras.push(nuevaObra);
                         registros[nuevoId] = contenido.registros || [];
 
-                        // Opcional: fusionar o actualizar itemsMaster si vienen nuevos
                         if (contenido.itemsMaster) {
                             contenido.itemsMaster.forEach(itemM => {
                                 if (!itemsMaster.some(i => i.item === itemM.item)) {
@@ -1113,7 +1137,6 @@
                         renderizarObras();
                         alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito para continuarla!`);
                     } else if (contenido.obras && contenido.registros) {
-                        // Respaldo completo
                         if (confirm('Este archivo contiene un respaldo completo. ¿Desea fusionarlo o reemplazar los datos actuales?')) {
                             obras = contenido.obras;
                             registros = contenido.registros;
@@ -1128,7 +1151,6 @@
                 } catch (error) {
                     alert('Error al leer el archivo JSON.');
                 }
-                // Limpiar input file
                 event.target.value = '';
             };
             lector.readAsText(archivo);
