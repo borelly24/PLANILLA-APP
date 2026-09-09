@@ -76,7 +76,7 @@
             align-items: center;
         }
         .search-box-item {
-            flex: 2;
+            flex: 1.5;
             display: flex;
             align-items: center;
             background: #fff;
@@ -93,7 +93,7 @@
             background: transparent;
         }
         .select-box-estacion {
-            flex: 1.2;
+            flex: 1;
         }
         .select-box-estacion select {
             width: 100%;
@@ -110,11 +110,20 @@
             background: #fff;
             border: 1px solid #ced4da;
             border-radius: 4px;
-            padding: 6px 10px;
+            padding: 6px 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            gap: 4px;
+        }
+        .date-box-filter input {
+            border: none;
+            outline: none;
+            font-size: 11px;
+            background: transparent;
+            cursor: pointer;
+            width: 95px;
         }
 
         /* Tarjetas de Obras */
@@ -333,8 +342,12 @@
                         <option value="">Estación</option>
                     </select>
                 </div>
-                <div class="date-box-filter" onclick="limpiarFiltroFecha()" title="Limpiar Filtros">
-                    <i class="fa-solid fa-calendar-days" style="color: #333;"></i>
+                <div class="date-box-filter" title="Filtrar por Fecha">
+                    <i class="fa-solid fa-calendar-days" style="color: #333; font-size: 12px;"></i>
+                    <input type="date" id="filtro-fecha-input" onchange="renderizarRegistros()">
+                </div>
+                <div style="cursor: pointer; padding: 4px;" onclick="limpiarFiltros()" title="Limpiar Filtros">
+                    <i class="fa-solid fa-rotate-left" style="color: #555; font-size: 13px;"></i>
                 </div>
             </div>
         </div>
@@ -990,11 +1003,13 @@
 
             let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
             let filtroEstacion = document.getElementById('filtro-estacion-select').value;
+            let filtroFecha = document.getElementById('filtro-fecha-input').value;
 
             let filtradosConIndex = lista.map((reg, index) => ({ reg, index })).filter(({ reg }) => {
                 let matchItem = (filtroItem === "") || (reg.item.toLowerCase().trim() === filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
                 let matchEstacion = filtroEstacion === "" || reg.estacion === filtroEstacion;
-                return matchItem && matchEstacion;
+                let matchFecha = filtroFecha === "" || reg.fecha === filtroFecha;
+                return matchItem && matchEstacion && matchFecha;
             });
 
             if (filtradosConIndex.length === 0) {
@@ -1069,9 +1084,10 @@
             renderizarRegistros();
         }
 
-        function limpiarFiltroFecha() {
+        function limpiarFiltros() {
             document.getElementById('filtro-item-input').value = '';
             document.getElementById('filtro-estacion-select').value = '';
+            document.getElementById('filtro-fecha-input').value = '';
             renderizarRegistros();
         }
 
@@ -1091,13 +1107,23 @@
             } else {
                 document.getElementById('modal-reg-title').innerText = 'Nuevo Registro';
                 document.getElementById('reg-id-edit').value = '';
-                document.getElementById('reg-estacion').value = '';
                 document.getElementById('reg-item').value = '';
                 document.getElementById('reg-descripcion').value = '';
                 document.getElementById('reg-cantidad').value = '1';
-                document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
-                document.getElementById('reg-ndescargo').value = '';
                 document.getElementById('reg-serie').value = '';
+
+                // Autocargar datos del último registro si existe (Estación, Fecha y N. Descargo)
+                let lista = registros[obraActualId] || [];
+                if (lista.length > 0) {
+                    let ultimo = lista[lista.length - 1];
+                    document.getElementById('reg-estacion').value = ultimo.estacion || '';
+                    document.getElementById('reg-fecha').value = ultimo.fecha || new Date().toISOString().split('T')[0];
+                    document.getElementById('reg-ndescargo').value = ultimo.ndescargo || '';
+                } else {
+                    document.getElementById('reg-estacion').value = '';
+                    document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('reg-ndescargo').value = '';
+                }
             }
         }
 
