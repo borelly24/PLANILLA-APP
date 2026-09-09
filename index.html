@@ -55,6 +55,29 @@
             color: #777;
         }
 
+        /* Botones de acción superior en vistas */
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: white;
+        }
+        .btn-excel-import { background-color: #0277bd; }
+        .btn-excel-template { background-color: #37474f; }
+
         /* FILTROS DE CAMPO */
         .filtros-container {
             background-color: #e9ecef;
@@ -209,7 +232,7 @@
 
         /* Estilos para Drag & Drop Móvil/Escritorio */
         tr.draggable-row {
-            touch-action: none; /* Evita que el scroll de la página bloquee el arrastre táctil */
+            touch-action: none;
             transition: background-color 0.2s;
         }
         tr.dragging {
@@ -228,12 +251,10 @@
             cursor: grabbing;
         }
 
-        /* Celda destacada de 3 cifras en verde */
         .highlight-green {
             background-color: var(--success-color) !important;
         }
 
-        /* Paneles de Datos Generales */
         .general-data {
             background: white;
             padding: 12px;
@@ -244,7 +265,7 @@
         }
         .general-data p { margin: 4px 0; }
 
-        /* Modales / Formularios Flotantes */
+        /* Modales */
         .modal {
             display: none;
             position: fixed;
@@ -371,12 +392,24 @@
             <div></div>
         </header>
 
+        <!-- Barra de acciones para carga masiva por Excel / CSV -->
+        <div class="action-bar" style="margin-top: 15px;">
+            <button class="action-btn btn-excel-import" onclick="document.getElementById('file-excel-items').click()">
+                <i class="fa-solid fa-file-excel"></i> Cargar Plantilla
+            </button>
+            <input type="file" id="file-excel-items" accept=".csv, .txt, .xlsx, .xls" style="display:none" onchange="importarItemsExcel(event)">
+            
+            <button class="action-btn btn-excel-template" onclick="descargarPlantillaItems()">
+                <i class="fa-solid fa-download"></i> Plantilla Modelo
+            </button>
+        </div>
+
         <div class="search-box-general">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="search-item-master" placeholder="Buscar ítem o descripción..." onkeyup="filtrarItemsMaster()">
         </div>
 
-        <div class="table-container" style="margin-top: 15px;">
+        <div class="table-container">
             <table>
                 <thead>
                     <tr>
@@ -493,7 +526,6 @@
             ]
         };
 
-        // Listado completo de ítems eléctricos integrado
         let itemsMaster = JSON.parse(localStorage.getItem('planilla_items_master')) || [
             { item: '1', desc: 'Inspección Servicio Medida Directa' },
             { item: '2', desc: 'Instalación completa del suministro (Medida directa)' },
@@ -520,6 +552,11 @@
         ];
 
         let obraActualId = null;
+
+        // EJECUTAR AL CARGAR LA PÁGINA
+        window.onload = function() {
+            renderizarObras();
+        };
 
         function guardarDatosLocal() {
             localStorage.setItem('planilla_obras', JSON.stringify(obras));
@@ -697,7 +734,6 @@
                     </td>
                 `;
 
-                // Eventos de Drag & Drop Integrados
                 tr.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', index);
                     setTimeout(() => tr.classList.add('dragging'), 0);
@@ -891,6 +927,63 @@
                 guardarDatosLocal();
                 renderizarItemsMaster();
             }
+        }
+
+        // FUNCIÓN PARA DESCARGAR PLANTILLA MODELO DE ÍTEMS
+        function descargarPlantillaItems() {
+            let csv = "\uFEFFItem;Descripción\n80;Colocación de poste de concreto de 12m o 14m\n1465239;POSTE DE HPC/HPV DE 12M x 1030 daN (CR)";
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = 'Plantilla_Items.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // FUNCIÓN PARA CARGAR ÍTEMS DESDE ARCHIVO EXCEL/CSV
+        function importarItemsExcel(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let text = e.target.result;
+                let lines = text.split('\n');
+                let countAdded = 0;
+
+                for (let i = 1; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    // Detectar separador (; o ,)
+                    let separator = line.includes(';') ? ';' : ',';
+                    let cols = line.split(separator);
+
+                    if (cols.length >= 2) {
+                        let itemCode = cols[0].replace(/["']/g, "").trim();
+                        let itemDesc = cols.slice(1).join(separator).replace(/["']/g, "").trim();
+
+                        if (itemCode && itemDesc) {
+                            // Si ya existe, actualizarlo, si no, agregarlo
+                            let existe = itemsMaster.find(im => im.item === itemCode);
+                            if (existe) {
+                                existe.desc = itemDesc;
+                            } else {
+                                itemsMaster.push({ item: itemCode, desc: itemDesc });
+                            }
+                            countAdded++;
+                        }
+                    }
+                }
+
+                guardarDatosLocal();
+                renderizarItemsMaster();
+                alert(`¡Se importaron/actualizaron ${countAdded} ítems correctamente!`);
+                event.target.value = ''; // limpiar input
+            };
+            reader.readAsText(file, 'UTF-8');
         }
 
         function exportarExcel(obraId) {
