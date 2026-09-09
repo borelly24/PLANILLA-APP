@@ -251,7 +251,9 @@
         /* Tablas y Contenedor Deslizable */
         .table-container {
             width: 100%;
+            max-height: 70vh; /* Altura máxima opcional para activar scroll interno si lo prefieres, o déjalo al body */
             overflow-x: auto;
+            overflow-y: auto; /* Permite desplazamiento vertical dentro del contenedor si limitas la altura */
             background: white;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -262,13 +264,20 @@
             border-collapse: collapse;
             white-space: nowrap;
             font-size: 0.85rem;
+            position: relative; /* Asegura el contexto de posicionamiento */
         }
         th, td {
             padding: 10px;
             border: 1px solid #ddd;
             text-align: left;
         }
-        th { background-color: var(--primary-color); color: white; }
+        th { 
+            background-color: var(--primary-color); 
+            color: white; 
+            position: sticky; /* Mantiene el encabezado fijo */
+            top: 0;           /* Se adhiere al borde superior del contenedor */
+            z-index: 10;      /* Asegura que esté por encima de las filas al hacer scroll */
+        }
 
         /* Estilos para Drag & Drop Móvil/Escritorio */
         tr.draggable-row {
