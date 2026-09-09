@@ -3,392 +3,789 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planilla App - Supervisor Eléctrico</title>
-    <!-- React y ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel para JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- SheetJS (XLSX) para exportar a Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-</head>
-<body class="bg-slate-100 min-h-screen text-slate-800">
-    <div id="root"></div>
+    <title>Planilla App</title>
+    <!-- Estilos y FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1e4620;
+            --primary-dark: #122d14;
+            --accent-color: #2e7d32;
+            --light-bg: #f4f6f5;
+            --success-color: #d4edda;
+            --border-color: #ccc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: var(--light-bg); color: #333; }
+        
+        /* Contenedores de Vistas */
+        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 80px;}
+        .view.active { display: block; }
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        /* Encabezados */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        header h1 { font-size: 1.2rem; }
+        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
 
-        // Catálogo semilla completo para la planilla
-        const SEED_CATALOG = [
-            { armado: "POSTE", item: "80", descripcion: "Colocación de poste de concreto de 12m o 14m – 2.500, 1.600, 1.324, 1.030, 735 o 500 daN" },
-            { armado: "POSTE", item: "81", descripcion: "Colocación de poste de concreto de 8, 9 o 10m – 1.324, 1.030, 735 o 500 daN" },
-            { armado: "POSTE", item: "1459733", descripcion: "POSTE HPC/HPV 9MX500 DAN(CR)" },
-            { armado: "POSTE", item: "1807941", descripcion: "POSTE HPC/HPV 9MX735 DAN(CR)" },
-            { armado: "POSTE", item: "1807940", descripcion: "POSTE HPC/HPV 9MX1030 DAN(CR)" },
-            { armado: "POSTE", item: "1475174", descripcion: "POSTE HPC/HPV 12MX735 DAN(CR)" },
-            { armado: "POSTE", item: "1465239", descripcion: "POSTE HPC/HPV 12MX1030 DAN(CR)" },
-            { armado: "POSTE", item: "1807947", descripcion: "POSTE HPC/HPV 12MX1324 DAN(CR)" },
-            { armado: "POSTE", item: "2000070", descripcion: "POSTE HPC/HPV 12MX1600 DAN(CR)" },
-            { armado: "POSTE", item: "88", descripcion: "Concreto Fc=210kgf/cm2 fundición para poste" },
-            { armado: "POSTE", item: "1310002", descripcion: "CEMENTO GRIS" },
-            { armado: "POSTE", item: "89", descripcion: "Colocación del sistema de puesta a tierra" },
-            { armado: "POSTE", item: "1808482", descripcion: "CABLE DESNUDO COPPER CLAD 7H#8AWG 3/8\"" },
-            { armado: "POSTE", item: "1525655", descripcion: "VARILLA DE PUESTA A TIERRA 5/8X8\"" },
-            { armado: "POSTE", item: "1808483", descripcion: "CONECTOR CUÑA PAT 5/8\" P/CABLE(CCS)" },
-            { armado: "POSTE", item: "1531537", descripcion: "CONECTOR COMPRESION PICA PT" },
-            { armado: "FIBRA", item: "82", descripcion: "Colocación de poste de fibra 12, 14m -1.600, 1.324, 1.030, 735 o 500 daN" },
-            { armado: "FIBRA", item: "83", descripcion: "Colocación de poste de fibra de 8, 9 o 10m - 1.600, 1.324, 1.030, 735 o 500 daN" },
-            { armado: "FIBRA", item: "1931817", descripcion: "POSTE FIBRA VIDRIO 9MX500 DAN(CR)" },
-            { armado: "FIBRA", item: "2000074", descripcion: "POSTE FIBRA VIDRIO 9MX735 DAN(CR)" },
-            { armado: "FIBRA", item: "2000295", descripcion: "POSTE FIBRA VIDRIO 9MX1030 DAN(CR)" },
-            { armado: "FIBRA", item: "1931407", descripcion: "POSTE FIBRA VIDRIO 12MX500 DAN(CR)" },
-            { armado: "FIBRA", item: "1918420", descripcion: "POSTE FIBRA VIDRIO 12MX735 DAN(CR)" },
-            { armado: "FIBRA", item: "2000075", descripcion: "POSTE FIBRA VIDRIO 12MX1030 DAN(CR)" },
-            { armado: "MT121-131", item: "103", descripcion: "Colocación de adecuación poste en terminal para 13.2kV" },
-            { armado: "MT121-131", item: "1931053", descripcion: "CRUCETA METALICA BANDERA 2400MM" },
-            { armado: "MT121-131", item: "1464431", descripcion: "DIAGONAL ANGULAR 7 (PIES)" },
-            { armado: "MT121-131", item: "1440944", descripcion: "ARANDELA PLANA REDONDA 5/8\"" },
-            { armado: "MT121-131", item: "1440860", descripcion: "GRAPA CONEXIÓN CABLE TIERRA S/TORN 5/8\"" },
-            { armado: "MT121-131", item: "1437659", descripcion: "TUERCA EXAGONAL ACERO GALV. 5/8\"" },
-            { armado: "MT121-131", item: "1464705", descripcion: "PERNO DE CARRUAJE DE 5/8 X 3\"" },
-            { armado: "MT121-131", item: "1437658", descripcion: "TORNILLO AC.GALVANIZ.CON OJO.C.T.5/8X12\"" },
-            { armado: "MT121-131", item: "1551282", descripcion: "PERNO ROSCA CORRIDA AC.GALV. 5/8X12\"" },
-            { armado: "MT121-131", item: "1464245", descripcion: "ABRAZADERA DOBLE DE 180MM DE 2 SALIDAS" },
-            { armado: "MT121-131", item: "1464250", descripcion: "ABRAZADERA DOBLE DE 200MM DE 2 SALIDAS" },
-            { armado: "MT121-131", item: "1464252", descripcion: "ABRAZADERA DOBLE DE 220MM DE 2 SALIDAS" },
-            { armado: "MT121-131", item: "1437647", descripcion: "TORNILLO AC.GALVANIZ.C.T.5/8X6\"" },
-            { armado: "MT121-131", item: "1441249", descripcion: "AISLADOR POLIMERICO SUSP 13.2KV" },
-            { armado: "MT121-131", item: "1450949", descripcion: "GRAPA DE RETENCION RECTA ALUMINIO 1/0AWG" },
-            { armado: "MT121-131", item: "1551418", descripcion: "GRILLETE LARGO RECTO 5/8 11 300 KG" }
-        ];
-
-        function App() {
-            // Estado de proyectos cargados desde localStorage para persistencia
-            const [proyectos, setProyectos] = useState(() => {
-                const saved = localStorage.getItem("proyectos_planilla");
-                return saved ? JSON.parse(saved) : [
-                    { id: "1", nombre: "Proyecto Redes Media Tensión - Sector Norte", circuito: "MT-102", municipio: "Magangué", items: {} }
-                ];
-            });
-
-            const [proyectoActivoId, setProyectoActivoId] = useState(null);
-            const [busquedaMaterial, setBusquedaMaterial] = useState("");
-            
-            // Estados para modales de proyectos
-            const [modalCrear, setModalCrear] = useState(false);
-            const [modalEditar, setModalEditar] = useState(false);
-            const [nombreProyectoInput, setNombreProyectoInput] = useState("");
-            const [circuitoInput, setCircuitoInput] = useState("");
-            const [municipioInput, setMunicipioInput] = useState("");
-            const [proyectoAEditar, setProyectoAEditar] = useState(null);
-
-            useEffect(() => {
-                localStorage.setItem("proyectos_planilla", JSON.stringify(proyectos));
-            }, [proyectos]);
-
-            const proyectoActivo = proyectos.find(p => p.id === proyectoActivoId);
-
-            // Funciones de gestión de proyectos
-            const handleCrearProyecto = (e) => {
-                e.preventDefault();
-                if (!nombreProyectoInput.trim()) return;
-
-                const nuevoProyecto = {
-                    id: Date.now().toString(),
-                    nombre: nombreProyectoInput,
-                    circuito: circuitoInput || "N/A",
-                    municipio: municipioInput || "Magangué",
-                    items: {} // { itemId: cantidad }
-                };
-
-                setProyectos([...proyectos, nuevoProyecto]);
-                setNombreProyectoInput("");
-                setCircuitoInput("");
-                setMunicipioInput("");
-                setModalCrear(false);
-            };
-
-            const handleActualizarProyecto = (e) => {
-                e.preventDefault();
-                if (!nombreProyectoInput.trim() || !proyectoAEditar) return;
-
-                setProyectos(proyectos.map(p => {
-                    if (p.id === proyectoAEditar.id) {
-                        return { ...p, nombre: nombreProyectoInput, circuito: circuitoInput, municipio: municipioInput };
-                    }
-                    return p;
-                }));
-
-                setModalEditar(false);
-                setProyectoAEditar(null);
-            };
-
-            const abrirModalEdicion = (proj) => {
-                setProyectoAEditar(proj);
-                setNombreProyectoInput(proj.nombre);
-                setCircuitoInput(proj.circuito);
-                setMunicipioInput(proj.municipio);
-                setModalEditar(true);
-            };
-
-            const eliminarProyecto = (id) => {
-                if (confirm("¿Estás seguro de eliminar este proyecto y su planilla asociada?")) {
-                    setProyectos(proyectos.filter(p => p.id !== id));
-                    if (proyectoActivoId === id) setProyectoActivoId(null);
-                }
-            };
-
-            // Modificar cantidades en la planilla del proyecto activo
-            const cambiarCantidad = (itemId, cantidad) => {
-                if (!proyectoActivo) return;
-                const val = parseInt(cantidad) || 0;
-                
-                const nuevosItems = { ...proyectoActivo.items };
-                if (val <= 0) {
-                    delete nuevosItems[itemId];
-                } else {
-                    nuevosItems[itemId] = val;
-                }
-
-                setProyectos(proyectos.map(p => {
-                    if (p.id === proyectoActivoId) {
-                        return { ...p, items: nuevosItems };
-                    }
-                    return p;
-                }));
-            };
-
-            // Exportar planilla activa a Excel
-            const exportarExcel = () => {
-                if (!proyectoActivo) return;
-
-                const datosExportar = SEED_CATALOG.map(item => {
-                    const cantidad = proyectoActivo.items[item.item] || 0;
-                    return {
-                        "Armado / Sistema": item.armado,
-                        "Código Ítem": item.item,
-                        "Descripción del Material": item.descripcion,
-                        "Cantidad": cantidad
-                    };
-                }).filter(row => row.Cantidad > 0); // Opcional: solo exportar los que tengan cantidad > 0 (o quitar filtro si prefieres todos)
-
-                if (datosExportar.length === 0) {
-                    alert("No hay materiales con cantidades registradas para exportar.");
-                    return;
-                }
-
-                const worksheet = XLSX.utils.json_to_sheet(datosExportar);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Planilla Materiales");
-                
-                // Descargar archivo
-                XLSX.writeFile(workbook, `Planilla_${proyectoActivo.nombre.replace(/\s+/g, '_')}.xlsx`);
-            };
-
-            const itemsFiltrados = useMemo(() => {
-                return SEED_CATALOG.filter(item => 
-                    item.descripcion.toLowerCase().includes(busquedaMaterial.toLowerCase()) ||
-                    item.item.includes(busquedaMaterial) ||
-                    item.armado.toLowerCase().includes(busquedaMaterial.toLowerCase())
-                );
-            }, [busquedaMaterial]);
-
-            // VISTA 1: Selector / Pantalla de Proyectos
-            if (!proyectoActivoId) {
-                return (
-                    <div className="max-w-5xl mx-auto p-6">
-                        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
-                            <div>
-                                <h1 className="text-2xl font-bold text-slate-900">Gestión de Proyectos y Redes</h1>
-                                <p className="text-sm text-slate-500">Selecciona un proyecto o crea uno nuevo para gestionar tu planilla de materiales.</p>
-                            </div>
-                            <button 
-                                onClick={() => { setNombreProyectoInput(""); setCircuitoInput(""); setMunicipioInput(""); setModalCrear(true); }}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer">
-                                + Nuevo Proyecto
-                            </button>
-                        </header>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {proyectos.map(proj => (
-                                <div key={proj.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
-                                    <div>
-                                        <div className="flex justify-between items-start mb-3">
-                                            <span className="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg">
-                                                {proj.circuito || "Sin Circuito"}
-                                            </span>
-                                            <span className="text-xs text-slate-400">{proj.municipio}</span>
-                                        </div>
-                                        <h3 className="font-bold text-slate-800 text-lg mb-2 line-clamp-2">{proj.nombre}</h3>
-                                        <p className="text-xs text-slate-500 mb-4">
-                                            Ítem(s) registrados: <span className="font-semibold text-slate-700">{Object.keys(proj.items || {}).length}</span>
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
-                                        <button 
-                                            onClick={() => setProyectoActivoId(proj.id)}
-                                            className="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2 rounded-xl transition cursor-pointer text-center">
-                                            Abrir Planilla
-                                        </button>
-                                        <button 
-                                            onClick={() => abrirModalEdicion(proj)}
-                                            className="p-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-600 transition cursor-pointer" title="Modificar">
-                                            ✏️
-                                        </button>
-                                        <button 
-                                            onClick={() => eliminarProyecto(proj.id)}
-                                            className="p-2 border border-red-100 hover:bg-red-50 rounded-xl text-red-600 transition cursor-pointer" title="Eliminar">
-                                            🗑️
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Modal Crear / Editar Proyecto */}
-                        {(modalCrear || modalEditar) && (
-                            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                                <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                        {modalCrear ? "Crear Nuevo Proyecto" : "Modificar Proyecto"}
-                                    </h3>
-                                    <form onSubmit={modalCrear ? handleCrearProyecto : handleActualizarProyecto} className="space-y-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Proyecto / Obra</label>
-                                            <input 
-                                                type="text" 
-                                                required
-                                                placeholder="Ej. Normalización de Redes MT/BT"
-                                                className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={nombreProyectoInput}
-                                                onChange={(e) => setNombreProyectoInput(e.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-600 mb-1">Circuito o Transformador</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Ej. MT-102"
-                                                className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={circuitoInput}
-                                                onChange={(e) => setCircuitoInput(e.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-600 mb-1">Municipio / Zona</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Ej. Magangué"
-                                                className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={municipioInput}
-                                                onChange={(e) => setMunicipioInput(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="flex justify-end gap-3 pt-4">
-                                            <button 
-                                                type="button" 
-                                                onClick={() => { setModalCrear(false); setModalEditar(false); }}
-                                                className="px-4 py-2 border border-slate-200 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-50 cursor-pointer">
-                                                Cancelar
-                                            </button>
-                                            <button 
-                                                type="submit" 
-                                                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow cursor-pointer">
-                                                {modalCrear ? "Guardar Proyecto" : "Actualizar"}
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            }
-
-            // VISTA 2: Planilla de Materiales del Proyecto Activo
-            return (
-                <div className="max-w-6xl mx-auto p-4 md:p-6">
-                    <header className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <button 
-                                onClick={() => setProyectoActivoId(null)}
-                                className="text-xs font-semibold text-blue-600 hover:underline mb-1 inline-block cursor-pointer">
-                                ← Volver a Proyectos
-                            </button>
-                            <h1 className="text-xl md:text-2xl font-bold text-slate-900">{proyectoActivo.nombre}</h1>
-                            <p className="text-xs text-slate-500 mt-0.5">Circuito: <span className="font-medium text-slate-700">{proyectoActivo.circuito}</span> | Zona: <span className="font-medium text-slate-700">{proyectoActivo.municipio}</span></p>
-                        </div>
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <button 
-                                onClick={exportarExcel}
-                                className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl shadow transition text-sm flex items-center justify-center gap-2 cursor-pointer">
-                                📊 Exportar a Excel
-                            </button>
-                        </div>
-                    </header>
-
-                    {/* Barra de Búsqueda */}
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6">
-                        <input 
-                            type="text" 
-                            placeholder="Buscar material por descripción, código de ítem o armado..." 
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={busquedaMaterial}
-                            onChange={(e) => setBusquedaMaterial(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Tabla de Planilla */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-                                        <th className="p-4">Armado</th>
-                                        <th className="p-4">Ítem</th>
-                                        <th className="p-4">Descripción</th>
-                                        <th className="p-4 text-center w-36">Cantidad</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 text-sm">
-                                    {itemsFiltrados.map((row) => {
-                                        const cantidadActual = proyectoActivo.items[row.item] || "";
-                                        return (
-                                            <tr key={row.item} className="hover:bg-slate-50/80">
-                                                <td className="p-4 font-medium text-slate-600 text-xs">{row.armado}</td>
-                                                <td className="p-4 text-blue-600 font-mono text-xs">{row.item}</td>
-                                                <td className="p-4 text-slate-700">{row.descripcion}</td>
-                                                <td className="p-4 text-center">
-                                                    <input 
-                                                        type="number" 
-                                                        min="0"
-                                                        placeholder="0"
-                                                        className="w-24 p-2 text-center bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        value={cantidadActual}
-                                                        onChange={(e) => cambiarCantidad(row.item, e.target.value)}
-                                                    />
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {itemsFiltrados.length === 0 && (
-                                        <tr>
-                                            <td colSpan="4" className="p-8 text-center text-slate-400 text-sm">
-                                                No se encontraron materiales con ese criterio de búsqueda.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            );
+        /* Buscadores y Filtros */
+        .search-box {
+            position: relative;
+            margin: 15px 0;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        /* Tarjetas de Obras */
+        .obra-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--accent-color);
+        }
+        .obra-info { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
+        .obra-actions { display: flex; gap: 12px; }
+        .obra-actions button { background: none; border: none; font-size: 1.1rem; cursor: pointer; }
+        .btn-edit { color: #2e7d32; }
+        .btn-export { color: #0277bd; }
+        .btn-delete { color: #c62828; }
+
+        /* Botón Flotante (FAB) */
+        .fab-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        .fab {
+            background-color: var(--accent-color);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* Menú Desplegable FAB */
+        .fab-menu {
+            display: none;
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            width: 220px;
+            overflow: hidden;
+        }
+        .fab-menu.show { display: block; }
+        .fab-menu button {
+            width: 100%;
+            padding: 12px 15px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .fab-menu button:hover { background-color: #f1f1f1; }
+
+        /* Tablas y Contenedor Deslizable */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+            font-size: 0.85rem;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background-color: var(--primary-color); color: white; }
+
+        /* Celda destacada de 3 cifras */
+        .highlight-green {
+            background-color: var(--success-color) !important;
+        }
+
+        /* Paneles de Datos Generales */
+        .general-data {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        .general-data p { margin: 4px 0; }
+
+        /* Modales / Formularios Flotantes */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+        .btn-cancel { background-color: #ccc; color: #333; }
+        .btn-save { background-color: var(--accent-color); color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- VISTA 1: VENTANA PRINCIPAL -->
+    <div id="main-view" class="view active">
+        <header>
+            <h1>PLANILLA APP</h1>
+            <i class="fa-solid fa-bolt"></i>
+        </header>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-obra" placeholder="Buscar Obra..." onkeyup="filtrarObras()">
+        </div>
+
+        <div id="lista-obras">
+            <!-- Se inyecta dinámicamente -->
+        </div>
+
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <button onclick="abrirVistaItems()"><i class="fa-solid fa-list"></i> 1- Lista de Ítems</button>
+                <button onclick="abrirModalObra()"><i class="fa-solid fa-plus-circle"></i> 2- Crear Obra</button>
+            </div>
+            <button class="fab" onclick="toggleFabMenu()"><i class="fa-solid fa-plus" id="fab-icon"></i></button>
+        </div>
+    </div>
+
+    <!-- VISTA 2: VENTANA DE PLANILLA / REGISTRO DE OPERACIÓN -->
+    <div id="planilla-view" class="view">
+        <header>
+            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 id="titulo-planilla">REGISTRO DE OPERACION</h1>
+            <div></div>
+        </header>
+
+        <div class="general-data" id="info-general-obra">
+            <!-- Datos generales de la obra seleccionada -->
+        </div>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-registro" placeholder="Buscar ítem o estación..." onkeyup="filtrarRegistros()">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estación</th>
+                        <th>Ítems</th>
+                        <th>Descripción</th>
+                        <th>Cant.</th>
+                        <th>Fecha Descargo</th>
+                        <th>Series / Obs</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-registros-body">
+                    <!-- Registros de la obra -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="fab-container">
+            <button class="fab" onclick="abrirModalRegistro()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+    </div>
+
+    <!-- VISTA 3: VENTANA DE ÍTEMS -->
+    <div id="items-view" class="view">
+        <header>
+            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1>LISTA DE ÍTEMS</h1>
+            <div></div>
+        </header>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-item-master" placeholder="Buscar ítem o descripción..." onkeyup="filtrarItemsMaster()">
+        </div>
+
+        <div class="table-container" style="margin-top: 15px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ítem</th>
+                        <th>Descripción</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-items-master">
+                    <!-- Catálogo de ítems -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="fab-container">
+            <button class="fab" onclick="abrirModalItemMaster()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVA / EDITAR OBRA -->
+    <div class="modal" id="modal-obra">
+        <div class="modal-content">
+            <h3 id="modal-obra-title" style="margin-bottom: 15px;">Nueva Obra</h3>
+            <input type="hidden" id="obra-id-edit">
+            <div class="form-group">
+                <label>Proyecto*</label>
+                <input type="text" id="input-proyecto" placeholder="Ej: HIS_AV659">
+            </div>
+            <div class="form-group">
+                <label>Circuito</label>
+                <input type="text" id="input-circuito" placeholder="Ej: SAN SEBASTIAN">
+            </div>
+            <div class="form-group">
+                <label>Zona</label>
+                <select id="input-zona">
+                    <option value="Urbano">Urbano</option>
+                    <option value="Rural">Rural</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalObra()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarObra()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVO / EDITAR REGISTRO -->
+    <div class="modal" id="modal-registro">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Nuevo Registro</h3>
+            <input type="hidden" id="reg-id-edit">
+            <div class="form-group">
+                <label>Estación*</label>
+                <input type="text" id="reg-estacion" placeholder="Ej: EPP 01-1">
+            </div>
+            <div class="form-group">
+                <label>Ítem*</label>
+                <input type="text" id="reg-item" placeholder="Ej: 80 o 1465239" oninput="autocompletarDescripcion(this.value)">
+            </div>
+            <div class="form-group">
+                <label>Descripción (Automática o Manual)</label>
+                <textarea id="reg-descripcion" rows="2" placeholder="Descripción del material o labor"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Cantidad*</label>
+                <input type="number" id="reg-cantidad" value="1">
+            </div>
+            <div class="form-group">
+                <label>Fecha de Descargo*</label>
+                <input type="date" id="reg-fecha">
+            </div>
+            <div class="form-group">
+                <label>N. Descargo</label>
+                <input type="text" id="reg-ndescargo" placeholder="Número de descargo">
+            </div>
+            <div class="form-group">
+                <label>Serie</label>
+                <input type="text" id="reg-serie" placeholder="Serial del equipo (si aplica)">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalRegistro()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarRegistro()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVO / EDITAR ITEM MAESTRO -->
+    <div class="modal" id="modal-item-master">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Gestión de Ítem</h3>
+            <input type="hidden" id="item-original-id">
+            <div class="form-group">
+                <label>Código de Ítem*</label>
+                <input type="text" id="master-item-code" placeholder="Ej: 80">
+            </div>
+            <div class="form-group">
+                <label>Descripción*</label>
+                <textarea id="master-item-desc" rows="3" placeholder="Descripción detallada..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalItemMaster()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarItemMaster()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DATOS LOCAL Y ESTADO ---
+        let obras = JSON.parse(localStorage.getItem('planilla_obras')) || [
+            { id: 1, proyecto: 'HIS_AV659', circuito: 'SAN SEBASTIAN', zona: 'Urbano', ultimaMod: Date.now() - 1000 },
+            { id: 2, proyecto: 'HIS_K7907', circuito: 'N/A', zona: 'Rural', ultimaMod: Date.now() - 50000 },
+            { id: 3, proyecto: 'HIS_M2807', circuito: 'N/A', zona: 'Urbano', ultimaMod: Date.now() - 100000 }
+        ];
+
+        let registros = JSON.parse(localStorage.getItem('planilla_registros')) || {
+            1: [
+                { id: 101, estacion: 'EPP 01-1', item: '80', descripcion: 'Colocación de poste de concreto de 12m o 14m', cantidad: 1, fecha: '2026-05-10', ndescargo: '123', serie: '' },
+                { id: 102, estacion: 'EPP 01-1', item: '1465239', descripcion: 'POSTE DE HPC/HPV DE 12M x 1030 daN (CR)', cantidad: 1, fecha: '2026-05-10', ndescargo: '124', serie: 'ABC99' }
+            ]
+        };
+
+        let itemsMaster = JSON.parse(localStorage.getItem('planilla_items_master')) || [
+            { item: '1', desc: 'Inspección Servicio Medida Directa' },
+            { item: '80', desc: 'Colocación de poste de concreto de 12m o 14m' },
+            { item: '1465239', desc: 'POSTE DE HPC/HPV DE 12M x 1030 daN (CR)' },
+            { item: '16', desc: 'Instalación o cambio de acometida' }
+        ];
+
+        let obraActualId = null;
+
+        function guardarDatosLocal() {
+            localStorage.setItem('planilla_obras', JSON.stringify(obras));
+            localStorage.setItem('planilla_registros', JSON.stringify(registros));
+            localStorage.setItem('planilla_items_master', JSON.stringify(itemsMaster));
+        }
+
+        // --- NAVEGACIÓN Y VISTAS ---
+        function cambiarVista(vistaId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(vistaId).classList.add('active');
+            cerrarFabMenu();
+        }
+
+        function toggleFabMenu() {
+            document.getElementById('fab-menu').classList.toggle('show');
+        }
+
+        function cerrarFabMenu() {
+            document.getElementById('fab-menu').classList.remove('show');
+        }
+
+        function volverPrincipal() {
+            cambiarVista('main-view');
+            renderizarObras();
+        }
+
+        function abrirVistaItems() {
+            cambiarVista('items-view');
+            renderizarItemsMaster();
+        }
+
+        // --- RENDERIZAR OBRAS (Ordenadas por uso reciente) ---
+        function renderizarObras(filtro = '') {
+            const contenedor = document.getElementById('lista-obras');
+            contenedor.innerHTML = '';
+            
+            // Ordenar: las más usadas/recientes arriba
+            let obrasOrdenadas = [...obras].sort((a, b) => b.ultimaMod - a.ultimaMod);
+
+            let filtradas = obrasOrdenadas.filter(o => o.proyecto.toLowerCase().includes(filtro.toLowerCase()));
+
+            if (filtradas.length === 0) {
+                contenedor.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">No hay obras encontradas.</p>';
+                return;
+            }
+
+            filtradas.forEach(obra => {
+                const card = document.createElement('div');
+                card.className = 'obra-card';
+                card.innerHTML = `
+                    <div class="obra-info" onclick="abrirPlanilla(${obra.id})">
+                        <i class="fa-regular fa-folder-open" style="font-size: 1.2rem; color: var(--accent-color);"></i>
+                        <div>
+                            <strong>${obra.proyecto}</strong>
+                            <div style="font-size: 0.8rem; color: #666;">${obra.circuito || 'Sin circuito'} (${obra.zona})</div>
+                        </div>
+                    </div>
+                    <div class="obra-actions">
+                        <button class="btn-edit" onclick="editarObra(${obra.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-export" onclick="exportarExcel(${obra.id})" title="Exportar a Excel"><i class="fa-solid fa-file-excel"></i></button>
+                        <button class="btn-delete" onclick="eliminarObra(${obra.id})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+        }
+
+        function filtrarObras() {
+            let val = document.getElementById('search-obra').value;
+            renderizarObras(val);
+        }
+
+        // --- GESTIÓN DE OBRAS ---
+        function abrirModalObra(id = null) {
+            document.getElementById('modal-obra').classList.add('show');
+            if (id) {
+                document.getElementById('modal-obra-title').innerText = 'Editar Obra';
+                let obra = obras.find(o => o.id === id);
+                document.getElementById('obra-id-edit').value = obra.id;
+                document.getElementById('input-proyecto').value = obra.proyecto;
+                document.getElementById('input-circuito').value = obra.circuito;
+                document.getElementById('input-zona').value = obra.zona;
+            } else {
+                document.getElementById('modal-obra-title').innerText = 'Nueva Obra';
+                document.getElementById('obra-id-edit').value = '';
+                document.getElementById('input-proyecto').value = '';
+                document.getElementById('input-circuito').value = '';
+                document.getElementById('input-zona').value = 'Urbano';
+            }
+        }
+
+        function cerrarModalObra() { document.getElementById('modal-obra').classList.remove('show'); }
+
+        function guardarObra() {
+            let id = document.getElementById('obra-id-edit').value;
+            let proyecto = document.getElementById('input-proyecto').value.trim();
+            let circuito = document.getElementById('input-circuito').value.trim();
+            let zona = document.getElementById('input-zona').value;
+
+            if (!proyecto) { alert('El campo Proyecto es obligatorio'); return; }
+
+            if (id) {
+                let obra = obras.find(o => o.id == id);
+                obra.proyecto = proyecto;
+                obra.circuito = circuito;
+                obra.zona = zona;
+                obra.ultimaMod = Date.now();
+            } else {
+                let nuevaId = Date.now();
+                obras.push({ id: nuevaId, proyecto, circuito, zona, ultimaMod: Date.now() });
+                registros[nuevaId] = [];
+            }
+            guardarDatosLocal();
+            cerrarModalObra();
+            renderizarObras();
+        }
+
+        function editarObra(id) { abrirModalObra(id); }
+
+        function eliminarObra(id) {
+            if (confirm('¿Desea eliminar esta obra y todos sus registros?')) {
+                obras = obras.filter(o => o.id !== id);
+                delete registros[id];
+                guardarDatosLocal();
+                renderizarObras();
+            }
+        }
+
+        // --- VISTA PLANILLA / REGISTROS ---
+        function abrirPlanilla(id) {
+            obraActualId = id;
+            let obra = obras.find(o => o.id === id);
+            obra.ultimaMod = Date.now(); // Actualiza uso reciente para que suba en la lista
+            guardarDatosLocal();
+
+            document.getElementById('titulo-planilla').innerText = obra.proyecto;
+            document.getElementById('info-general-obra').innerHTML = `
+                <p><strong>Proyecto:</strong> ${obra.proyecto}</p>
+                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Zona:</strong> ${obra.zona}</p>
+            `;
+            cambiarVista('planilla-view');
+            renderizarRegistros();
+        }
+
+        function renderizarRegistros(filtro = '') {
+            let tbody = document.getElementById('tabla-registros-body');
+            tbody.innerHTML = '';
+            let lista = registros[obraActualId] || [];
+
+            let filtrados = lista.filter(r => r.estacion.toLowerCase().includes(filtro.toLowerCase()) || r.item.toLowerCase().includes(filtro.toLowerCase()) || r.descripcion.toLowerCase().includes(filtro.toLowerCase()));
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777;">No hay registros cargados.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach((reg, index) => {
+                // Condición solicitada: Si el ítem tiene 3 cifras (o más de 2 caracteres, adaptado a 3 dígitos o según regla), se colorea en verde
+                // Usamos la regla de longitud o valor exacto de 3 cifras numéricas si se desea, ejemplo: reg.item.length === 3
+                let esTresCifras = reg.item.length === 3;
+                let claseVerde = esTresCifras ? 'highlight-green' : '';
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${reg.estacion}</td>
+                    <td class="${claseVerde}"><strong>${reg.item}</strong></td>
+                    <td>${reg.descripcion}</td>
+                    <td>${reg.cantidad}</td>
+                    <td>${reg.fecha}</td>
+                    <td>${reg.serie || reg.ndescargo || ''}</td>
+                    <td>
+                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:8px;"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarRegistros() {
+            let val = document.getElementById('search-registro').value;
+            renderizarRegistros(val);
+        }
+
+        // --- GESTIÓN DE REGISTROS ---
+        function abrirModalRegistro(id = null) {
+            document.getElementById('modal-registro').classList.add('show');
+            document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
+            if (id) {
+                let reg = registros[obraActualId].find(r => r.id === id);
+                document.getElementById('reg-id-edit').value = reg.id;
+                document.getElementById('reg-estacion').value = reg.estacion;
+                document.getElementById('reg-item').value = reg.item;
+                document.getElementById('reg-descripcion').value = reg.descripcion;
+                document.getElementById('reg-cantidad').value = reg.cantidad;
+                document.getElementById('reg-fecha').value = reg.fecha;
+                document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
+                document.getElementById('reg-serie').value = reg.serie || '';
+            } else {
+                document.getElementById('reg-id-edit').value = '';
+                document.getElementById('reg-estacion').value = '';
+                document.getElementById('reg-item').value = '';
+                document.getElementById('reg-descripcion').value = '';
+                document.getElementById('reg-cantidad').value = '1';
+                document.getElementById('reg-ndescargo').value = '';
+                document.getElementById('reg-serie').value = '';
+            }
+        }
+
+        function cerrarModalRegistro() { document.getElementById('modal-registro').classList.remove('show'); }
+
+        function autocompletarDescripcion(itemCode) {
+            let encontrado = itemsMaster.find(i => i.item === itemCode.trim());
+            if (encontrado) {
+                document.getElementById('reg-descripcion').value = encontrado.desc;
+            }
+        }
+
+        function guardarRegistro() {
+            let id = document.getElementById('reg-id-edit').value;
+            let estacion = document.getElementById('reg-estacion').value.trim();
+            let item = document.getElementById('reg-item').value.trim();
+            let descripcion = document.getElementById('reg-descripcion').value.trim();
+            let cantidad = document.getElementById('reg-cantidad').value;
+            let fecha = document.getElementById('reg-fecha').value;
+            let ndescargo = document.getElementById('reg-ndescargo').value.trim();
+            let serie = document.getElementById('reg-serie').value.trim();
+
+            if (!estacion || !item || !cantidad || !fecha) {
+                alert('Complete los campos obligatorios (*)');
+                return;
+            }
+
+            if (!registros[obraActualId]) registros[obraActualId] = [];
+
+            if (id) {
+                let reg = registros[obraActualId].find(r => r.id == id);
+                reg.estacion = estacion;
+                reg.item = item;
+                reg.descripcion = descripcion;
+                reg.cantidad = cantidad;
+                reg.fecha = fecha;
+                reg.ndescargo = ndescargo;
+                reg.serie = serie;
+            } else {
+                registros[obraActualId].push({
+                    id: Date.now(),
+                    estacion, item, descripcion, cantidad, fecha, ndescargo, serie
+                });
+            }
+
+            guardarDatosLocal();
+            cerrarModalRegistro();
+            renderizarRegistros();
+        }
+
+        function editarRegistro(id) { abrirModalRegistro(id); }
+
+        function eliminarRegistro(id) {
+            if (confirm('¿Eliminar este registro de la planilla?')) {
+                registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
+                guardarDatosLocal();
+                renderizarRegistros();
+            }
+        }
+
+        // --- GESTIÓN DE ÍTEMS MASTER ---
+        function renderizarItemsMaster(filtro = '') {
+            let tbody = document.getElementById('tabla-items-master');
+            tbody.innerHTML = '';
+            let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
+
+            filtrados.forEach(item => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.item}</strong></td>
+                    <td>${item.desc}</td>
+                    <td>
+                        <button onclick="editarItemMaster('${item.item}')" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:8px;"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarItemMaster('${item.item}')" style="background:none; border:none; color:#c62828; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarItemsMaster() {
+            let val = document.getElementById('search-item-master').value;
+            renderizarItemsMaster(val);
+        }
+
+        function abrirModalItemMaster(codigo = null) {
+            document.getElementById('modal-item-master').classList.add('show');
+            if (codigo) {
+                let itm = itemsMaster.find(i => i.item === codigo);
+                document.getElementById('item-original-id').value = itm.item;
+                document.getElementById('master-item-code').value = itm.item;
+                document.getElementById('master-item-desc').value = itm.desc;
+            } else {
+                document.getElementById('item-original-id').value = '';
+                document.getElementById('master-item-code').value = '';
+                document.getElementById('master-item-desc').value = '';
+            }
+        }
+
+        function cerrarModalItemMaster() { document.getElementById('modal-item-master').classList.remove('show'); }
+
+        function guardarItemMaster() {
+            let originalId = document.getElementById('item-original-id').value;
+            let code = document.getElementById('master-item-code').value.trim();
+            let desc = document.getElementById('master-item-desc').value.trim();
+
+            if (!code || !desc) { alert('Complete todos los campos'); return; }
+
+            if (originalId) {
+                itemsMaster = itemsMaster.filter(i => i.item !== originalId);
+            }
+            itemsMaster.push({ item: code, desc: desc });
+            guardarDatosLocal();
+            cerrarModalItemMaster();
+            renderizarItemsMaster();
+        }
+
+        function editarItemMaster(code) { abrirModalItemMaster(code); }
+
+        function eliminarItemMaster(code) {
+            if (confirm('¿Eliminar este ítem del catálogo?')) {
+                itemsMaster = itemsMaster.filter(i => i.item !== code);
+                guardarDatosLocal();
+                renderizarItemsMaster();
+            }
+        }
+
+        // --- EXPORTAR A EXCEL (CSV Compatible con formato exacto) ---
+        function exportarExcel(obraId) {
+            let obra = obras.find(o => o.id === obraId);
+            let listaReg = registros[obraId] || [];
+
+            if (listaReg.length === 0) {
+                alert('No hay registros en esta obra para exportar.');
+                return;
+            }
+
+            // Columnas solicitadas: Estación, Zona, Ítems, Descripción, Cantidad, Circuito, Fecha, N. Descargo, Proyecto, SERIE
+            let csvContent = "\uFEFFEstación;Zona;Ítems;Descripción;Cantidad;Circuito;Fecha;N. Descargo;Proyecto;SERIE\n";
+
+            listaReg.forEach(r => {
+                let fila = [
+                    r.estacion,
+                    obra.zona,
+                    r.item,
+                    `"${r.descripcon || r.descripcion}"`, // Comillas para evitar problemas con comas
+                    r.cantidad,
+                    obra.circuito,
+                    r.fecha,
+                    r.ndescargo || '',
+                    obra.proyecto,
+                    r.serie || ''
+                ];
+                csvContent += fila.join(";") + "\n";
+            });
+
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = `${obra.proyecto}_Planilla.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
     </script>
 </body>
 </html>
