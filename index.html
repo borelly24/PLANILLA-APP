@@ -1364,6 +1364,11 @@
                     document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
                     document.getElementById('reg-ndescargo').value = '';
                 }
+
+                // Posicionar automáticamente el cursor en la casilla de ítem para un nuevo registro
+                setTimeout(() => {
+                    document.getElementById('reg-item').focus();
+                }, 100);
             }
         }
 
