@@ -379,6 +379,9 @@
                 <button onclick="abrirModalExportarObra(); cerrarTopDropdownMenu();">
                     <i class="fa-solid fa-file-export" style="color: #0277bd; width: 20px;"></i> Exportar Obra
                 </button>
+                <button onclick="abrirModalExportarFecha(); cerrarTopDropdownMenu();">
+                    <i class="fa-solid fa-calendar-days" style="color: #d97706; width: 20px;"></i> Exportar Informe por Fecha
+                </button>
                 <button onclick="exportarTodoJSON(); cerrarTopDropdownMenu();">
                     <i class="fa-solid fa-database" style="color: #2e7d32; width: 20px;"></i> Exportar Todo
                 </button>
@@ -413,6 +416,19 @@
             <div></div>
         </header>
 
+        <!-- BOTÓN Y MENÚ DESPLEGABLE EN VISTA ESTACIONES (CONSOLIDADO DE MATERIALES) -->
+        <div class="dropdown-container">
+            <button class="btn-top-dropdown" onclick="toggleTopDropdownMenuEstaciones()">
+                <span><i class="fa-solid fa-boxes-stacked" style="color: #2e7d32; margin-right: 6px;"></i> Opciones de Obra y Materiales</span>
+                <i class="fa-solid fa-chevron-down" id="top-dropdown-icon-estaciones"></i>
+            </button>
+            <div class="top-dropdown-menu" id="top-dropdown-menu-estaciones">
+                <button onclick="abrirConsolidadoMateriales(); cerrarTopDropdownMenuEstaciones();">
+                    <i class="fa-solid fa-calculator" style="color: #0277bd; width: 20px;"></i> Consolidado de Materiales (Obra Completa)
+                </button>
+            </div>
+        </div>
+
         <div class="general-data" id="info-general-obra-estaciones"></div>
 
         <div class="search-box-general">
@@ -443,7 +459,7 @@
             </button>
             <div class="top-dropdown-menu" id="top-dropdown-menu-planilla">
                 <button onclick="abrirConsolidadoMateriales(); cerrarTopDropdownMenuPlanilla();">
-                    <i class="fa-solid fa-calculator" style="color: #0277bd; width: 20px;"></i> Consolidado de Materiales
+                    <i class="fa-solid fa-calculator" style="color: #0277bd; width: 20px;"></i> Consolidado de Materiales (Obra Completa)
                 </button>
             </div>
         </div>
@@ -531,7 +547,7 @@
     <!-- MODAL: CONSOLIDADO DE MATERIALES -->
     <div class="modal" id="modal-consolidado">
         <div class="modal-content" style="max-width: 550px;">
-            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-calculator"></i> Consolidado de Materiales</h3>
+            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-calculator"></i> Consolidado de Materiales (Obra Completa)</h3>
             <div class="table-container" style="max-height: 350px; overflow-y: auto;">
                 <table>
                     <thead>
@@ -613,14 +629,29 @@
         </div>
     </div>
 
+    <!-- MODAL: EXPORTAR INFORME POR FECHA -->
+    <div class="modal" id="modal-exportar-fecha">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-calendar-days" style="color: #d97706;"></i> Exportar Informe por Fecha</h3>
+            <div class="form-group">
+                <label>Selecciona la fecha para exportar todos los registros de todas las obras:</label>
+                <input type="date" id="input-fecha-exportar" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalExportarFecha()">Cancelar</button>
+                <button class="btn btn-save" onclick="ejecutarExportarInformePorFecha()">Exportar Excel (CSV)</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: NUEVO / EDITAR REGISTRO -->
     <div class="modal" id="modal-registro">
         <div class="modal-content">
             <h3 style="margin-bottom: 15px;" id="modal-reg-title">Nuevo Registro</h3>
             <input type="hidden" id="reg-id-edit">
             <div class="form-group">
-                <label>Estación*</label>
-                <input type="text" id="reg-estacion" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                <label>Estación* (Bloqueada aquí por seguridad)</label>
+                <input type="text" id="reg-estacion" readonly style="background-color: #e9ecef; cursor: not-allowed; color: #555;">
             </div>
             <div class="form-group">
                 <label>Ítem*</label>
@@ -853,7 +884,7 @@
             { item: '165', desc: 'Traslado de caja primaria o pararrayos para 13.2kV o 34.5kV' },
             { item: '166', desc: 'Traslado de línea secundaria aérea en trenza' },
             { item: '167', desc: 'Traslado de luminaria' },
-            { item: '168', desc: 'Traslado trafo distribución 1F o 2F con accesorios capacidades 3-75kVA' },
+            { item: '168', desc: 'Traslado trafo distribución 1F o 2F with accesorios capacidades 3-75kVA' },
             { item: '169', desc: 'Traslado de trafo distribución 3F-Switces-reguladores o reconectadores' },
             { item: '170', desc: 'Retiro de 1 hilo línea primaria' },
             { item: '171', desc: 'Retiro de adecuación monohilo o dos hilos red primaria en poste' },
@@ -1055,6 +1086,7 @@
             document.getElementById(vistaId).classList.add('active');
             cerrarFabMenu();
             cerrarTopDropdownMenu();
+            cerrarTopDropdownMenuEstaciones();
             cerrarTopDropdownMenuPlanilla();
         }
 
@@ -1071,6 +1103,23 @@
         function cerrarTopDropdownMenu() {
             const menu = document.getElementById('top-dropdown-menu');
             const icon = document.getElementById('top-dropdown-icon');
+            if (menu) menu.classList.remove('show');
+            if (icon) {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        function toggleTopDropdownMenuEstaciones() {
+            const menu = document.getElementById('top-dropdown-menu-estaciones');
+            const icon = document.getElementById('top-dropdown-icon-estaciones');
+            menu.classList.toggle('show');
+            icon.classList.toggle('fa-chevron-up');
+            icon.classList.toggle('fa-chevron-down');
+        }
+        function cerrarTopDropdownMenuEstaciones() {
+            const menu = document.getElementById('top-dropdown-menu-estaciones');
+            const icon = document.getElementById('top-dropdown-icon-estaciones');
             if (menu) menu.classList.remove('show');
             if (icon) {
                 icon.classList.remove('fa-chevron-up');
@@ -1099,6 +1148,7 @@
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.dropdown-container')) {
                 cerrarTopDropdownMenu();
+                cerrarTopDropdownMenuEstaciones();
                 cerrarTopDropdownMenuPlanilla();
             }
         });
@@ -1268,17 +1318,19 @@
                 return;
             }
             
-            // Creamos un registro base o simplemente abrimos la planilla con esa estación para que agreguen ítems
             estacionActual = nuevaEst;
             cerrarModalCrearEstacion();
             abrirPlanillaEstacion(nuevaEst);
         }
 
         function eliminarEstacion(est) {
-            if (confirm(`¿Desea eliminar la estación "${est}" y todos sus registros asociados?`)) {
+            let confirmacion = prompt(`ADVERTENCIA: Está a punto de eliminar la estación "${est}" y TODOS sus registros asociados.\n\nPara confirmar, escriba la palabra ELIMINAR en mayúsculas:`);
+            if (confirmacion === "ELIMINAR") {
                 registros[obraActualId] = registros[obraActualId].filter(r => r.estacion !== est);
                 guardarDatosLocal();
                 renderizarEstaciones();
+            } else if (confirmacion !== null) {
+                alert('La palabra de confirmación no coincide. No se ha eliminado la estación.');
             }
         }
 
@@ -1297,7 +1349,7 @@
             renderizarRegistros();
         }
 
-        // --- CONSOLIDADO DE MATERIALES ---
+        // --- CONSOLIDADO DE MATERIALES (OBRA COMPLETA) ---
         function abrirConsolidadoMateriales() {
             let tbody = document.getElementById('tabla-consolidado-body');
             tbody.innerHTML = '';
@@ -1374,13 +1426,13 @@
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${obra.proyecto}_consolidado_materiales.csv`);
+            link.setAttribute("download", `${obra.proyecto}_consolidado_materiales_obra_completa.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        // --- FUNCIONES DE EXPORTAR E IMPORTAR (JSON / OBRAS / TODO) ---
+        // --- FUNCIONES DE EXPORTAR E IMPORTAR (JSON / OBRAS / TODO / FECHA) ---
         function exportarTodoJSON() {
             const dataBackup = {
                 obras: obras,
@@ -1433,6 +1485,68 @@
             a.click();
             URL.revokeObjectURL(url);
             cerrarModalExportarObra();
+        }
+
+        function abrirModalExportarFecha() {
+            document.getElementById('input-fecha-exportar').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-exportar-fecha').classList.add('show');
+        }
+
+        function cerrarModalExportarFecha() {
+            document.getElementById('modal-exportar-fecha').classList.remove('show');
+        }
+
+        function ejecutarExportarInformePorFecha() {
+            let fechaSeleccionada = document.getElementById('input-fecha-exportar').value;
+            if (!fechaSeleccionada) {
+                alert('Por favor selecciona una fecha.');
+                return;
+            }
+
+            let registrosFiltradosPorFecha = [];
+            
+            // Recorrer todas las obras y sus registros
+            Object.keys(registros).forEach(obraId => {
+                let obraObj = obras.find(o => o.id == obraId);
+                let nombreObra = obraObj ? obraObj.proyecto : 'Desconocida';
+                let listaRegs = registros[obraId] || [];
+
+                listaRegs.forEach(reg => {
+                    if (reg.fecha === fechaSeleccionada) {
+                        registrosFiltradosPorFecha.push({
+                            obra: nombreObra,
+                            estacion: reg.estacion,
+                            item: reg.item,
+                            descripcion: reg.descripcion,
+                            cantidad: reg.cantidad,
+                            fecha: reg.fecha,
+                            ndescargo: reg.ndescargo || '',
+                            serie: reg.serie || ''
+                        });
+                    }
+                });
+            });
+
+            if (registrosFiltradosPorFecha.length === 0) {
+                alert(`No se encontraron registros para la fecha ${fechaSeleccionada} en ninguna obra.`);
+                return;
+            }
+
+            // Construir CSV incluyendo la columna adicional "Obra"
+            let csvContent = "data:text/csv;charset=utf-8,Obra,Estacion,Item,Descripcion,Cantidad,Fecha,N. Descargo,Serie\n";
+            registrosFiltradosPorFecha.forEach(r => {
+                let row = [`"${r.obra}"`, `"${r.estacion}"`, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo}"`, `"${r.serie}"`];
+                csvContent += row.join(",") + "\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `informe_fecha_${fechaSeleccionada}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            cerrarModalExportarFecha();
         }
 
         function cargarObraJSON(event) {
@@ -1610,7 +1724,7 @@
                 document.getElementById('reg-descripcion').value = '';
                 document.getElementById('reg-cantidad').value = '1';
                 document.getElementById('reg-serie').value = '';
-                document.getElementById('reg-estacion').value = estacionActual; // Asignación automática de la estación actual
+                document.getElementById('reg-estacion').value = estacionActual; // Asignación automática y fija de la estación actual
 
                 let lista = registros[obraActualId] || [];
                 if (lista.length > 0) {
@@ -1639,7 +1753,7 @@
 
         function guardarRegistro() {
             let id = document.getElementById('reg-id-edit').value;
-            let estacion = estacionActual;
+            let estacion = estacionActual; // Siempre se usa la estación actual bloqueada
             let item = document.getElementById('reg-item').value.trim();
             let descripcion = document.getElementById('reg-descripcion').value.trim();
             let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 1;
