@@ -291,11 +291,13 @@
             border-top: 2px dashed var(--accent-color);
         }
         .drag-handle {
-            cursor: grab;
-            color: #888;
-            margin-right: 8px;
-            display: inline-block;
-        }
+    cursor: grab;
+    color: #888;
+    display: inline-block;
+    font-size: 12px; /* Reduce el tamaño del icono/puntos */
+    width: 10px;     /* Achica el espacio horizontal que consume */
+    text-align: center;
+}
         .drag-handle:active {
             cursor: grabbing;
         }
