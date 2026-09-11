@@ -1188,8 +1188,13 @@
                 consolidadoMap[itemKey].cantidadTotal += cantidad;
             });
 
+            // Convertir a array y ordenar alfabéticamente por la descripción (o por el código 'item' si prefieres)
+            let arrayConsolidado = Object.values(consolidadoMap).sort((a, b) => {
+                return a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'accent' });
+            });
+
             // Renderizar filas en el modal
-            Object.values(consolidadoMap).forEach(item => {
+            arrayConsolidado.forEach(item => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${item.item}</strong></td>
@@ -1201,7 +1206,6 @@
 
             document.getElementById('modal-consolidado').classList.add('show');
         }
-
         function cerrarConsolidadoMateriales() {
             document.getElementById('modal-consolidado').classList.remove('show');
         }
