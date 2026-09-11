@@ -1398,8 +1398,10 @@
 
             if (!registros[obraActualId]) registros[obraActualId] = [];
 
-            // GUARDAR EL FILTRO ACTUAL DE ESTACIÓN ANTES DE RENDERIZAR
-            let estacionFiltroActual = document.getElementById('filtro-estacion-select').value;
+            // RESPALDAR TODOS LOS FILTROS ACTUALES
+            let filtroItemActual = document.getElementById('filtro-item-input').value;
+            let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
+            let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
 
             if (id) {
                 let reg = registros[obraActualId].find(r => r.id == id);
@@ -1427,8 +1429,10 @@
             cerrarModalRegistro();
             actualizarSelectEstaciones();
 
-            // RESTAURAR EL FILTRO DE ESTACIÓN SELECCIONADO PARA QUE NO SE DESHAGA
-            document.getElementById('filtro-estacion-select').value = estacionFiltroActual;
+            // RESTAURAR LOS FILTROS
+            document.getElementById('filtro-item-input').value = filtroItemActual;
+            document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
+            document.getElementById('filtro-fecha-input').value = filtroFechaActual;
 
             renderizarRegistros();
         }
@@ -1437,13 +1441,23 @@
 
         function eliminarRegistro(id) {
             if (confirm('¿Desea eliminar este registro?')) {
+                // RESPALDAR LOS FILTROS ACTUALES ANTES DE BORRAR
+                let filtroItemActual = document.getElementById('filtro-item-input').value;
+                let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
+                let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
+
                 registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
                 guardarDatosLocal();
                 actualizarSelectEstaciones();
+
+                // RESTAURAR LOS FILTROS
+                document.getElementById('filtro-item-input').value = filtroItemActual;
+                document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
+                document.getElementById('filtro-fecha-input').value = filtroFechaActual;
+
                 renderizarRegistros();
             }
         }
-
         function renderizarItemsMaster(filtro = '') {
             let tbody = document.getElementById('tabla-items-master');
             tbody.innerHTML = '';
