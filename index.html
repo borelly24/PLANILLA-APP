@@ -270,6 +270,7 @@
             min-width: 680px;
             border-collapse: collapse;
             font-size: 0.8rem;
+            table-layout: fixed;
         }
 
         th, td {
@@ -1336,16 +1337,24 @@
         }
 
         function guardarNuevaEstacion() {
-            let nuevaEst = document.getElementById('input-nueva-estacion').value.trim();
-            if (!nuevaEst) {
-                alert('El nombre de la estación es obligatorio');
-                return;
-            }
-            
-            estacionActual = nuevaEst;
-            cerrarModalCrearEstacion();
-            abrirPlanillaEstacion(nuevaEst);
-        }
+    let nuevaEst = document.getElementById('input-nueva-estacion').value.trim();
+    if (!nuevaEst) {
+        alert('El nombre de la estación es obligatorio');
+        return;
+    }
+
+    let lista = registros[obraActualId] || [];
+    let estacionesUnicas = [...new Set(lista.map(r => r.estacion))];
+    
+    if (estacionesUnicas.includes(nuevaEst)) {
+        alert('Error: Ya existe una estación con este nombre en la obra.');
+        return;
+    }
+    
+    estacionActual = nuevaEst;
+    cerrarModalCrearEstacion();
+    abrirPlanillaEstacion(nuevaEst);
+}
 
         function editarEstacion(estActual) {
             let nuevoNombre = prompt("Ingrese el nuevo nombre para la estación:", estActual);
