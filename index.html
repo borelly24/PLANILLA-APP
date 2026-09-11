@@ -1822,7 +1822,15 @@ function renderizarRegistros() {
     }
 
     filtrados.forEach(reg => {
+        let itemStr = String(reg.item).trim();
+        let esMenorOIgualA3Cifras = itemStr.length <= 3;
+
         let tr = document.createElement('tr');
+        tr.className = 'draggable-row';
+        if (esMenorOIgualA3Cifras) {
+            tr.classList.add('highlight-green');
+        }
+
         tr.innerHTML = `
             <td>${reg.estacion}</td>
             <td><strong>${reg.item}</strong></td>
