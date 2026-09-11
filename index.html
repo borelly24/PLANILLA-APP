@@ -180,8 +180,8 @@
             width: 95px;
         }
 
-        /* Tarjetas de Obras */
-        .obra-card {
+        /* Tarjetas de Obras y Estaciones */
+        .obra-card, .estacion-card {
             background: white;
             border-radius: 8px;
             padding: 12px 15px;
@@ -192,9 +192,9 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border-left: 5px solid var(--accent-color);
         }
-        .obra-info { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
-        .obra-actions { display: flex; gap: 12px; }
-        .obra-actions button { background: none; border: none; font-size: 1.1rem; cursor: pointer; }
+        .obra-info, .estacion-info { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
+        .obra-actions, .estacion-actions { display: flex; gap: 12px; }
+        .obra-actions button, .estacion-actions button { background: none; border: none; font-size: 1.1rem; cursor: pointer; }
         .btn-edit { color: #2e7d32; }
         .btn-export { color: #0277bd; }
         .btn-delete { color: #c62828; }
@@ -405,10 +405,32 @@
         </div>
     </div>
 
+    <!-- NUEVA VISTA: LISTA DE ESTACIONES DE LA OBRA -->
+    <div id="estaciones-view" class="view">
+        <header>
+            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 id="titulo-estaciones">ESTACIONES DE LA OBRA</h1>
+            <div></div>
+        </header>
+
+        <div class="general-data" id="info-general-obra-estaciones"></div>
+
+        <div class="search-box-general">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-estacion" placeholder="Buscar Estación..." onkeyup="filtrarEstaciones()">
+        </div>
+
+        <div id="lista-estaciones"></div>
+
+        <div class="fab-container">
+            <button class="fab" onclick="abrirModalCrearEstacion()" title="Crear Estación"><i class="fa-solid fa-plus"></i></button>
+        </div>
+    </div>
+
     <!-- VISTA 2: VENTANA DE PLANILLA / REGISTRO DE OPERACIÓN -->
     <div id="planilla-view" class="view">
         <header>
-            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
+            <button class="back-btn" onclick="volverAEstaciones()"><i class="fa-solid fa-arrow-left"></i></button>
             <h1 id="titulo-planilla">REGISTRO DE OPERACION</h1>
             <div></div>
         </header>
@@ -436,7 +458,7 @@
                     <i class="fa-solid fa-magnifying-glass" style="color: #777; margin-right: 6px; font-size: 12px;"></i>
                     <input type="text" id="filtro-item-input" placeholder="Buscar Ítem..." onkeyup="renderizarRegistros()">
                 </div>
-                <div class="select-box-estacion">
+                <div class="select-box-estacion" style="display:none;">
                     <select id="filtro-estacion-select" onchange="renderizarRegistros()">
                         <option value="">Estación</option>
                     </select>
@@ -561,6 +583,21 @@
         </div>
     </div>
 
+    <!-- MODAL: CREAR ESTACIÓN -->
+    <div class="modal" id="modal-estacion">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Crear Nueva Estación</h3>
+            <div class="form-group">
+                <label>Nombre / Código de la Estación*</label>
+                <input type="text" id="input-nueva-estacion" placeholder="Ej: EPP 01-1">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalCrearEstacion()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarNuevaEstacion()">Guardar y Entrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: SELECCIONAR OBRA PARA EXPORTAR -->
     <div class="modal" id="modal-exportar-obra">
         <div class="modal-content">
@@ -583,7 +620,7 @@
             <input type="hidden" id="reg-id-edit">
             <div class="form-group">
                 <label>Estación*</label>
-                <input type="text" id="reg-estacion" placeholder="Ej: EPP 01-1">
+                <input type="text" id="reg-estacion" readonly style="background-color: #e9ecef; cursor: not-allowed;">
             </div>
             <div class="form-group">
                 <label>Ítem*</label>
@@ -1000,6 +1037,7 @@
         ];
 
         let obraActualId = null;
+        let estacionActual = null;
 
         // EJECUTAR AL CARGAR LA PÁGINA
         window.onload = function() {
@@ -1066,6 +1104,7 @@
         });
 
         function volverPrincipal() { cambiarVista('main-view'); renderizarObras(); }
+        function volverAEstaciones() { cambiarVista('estaciones-view'); renderizarEstaciones(); }
         function abrirVistaItems() { cambiarVista('items-view'); renderizarItemsMaster(); }
 
         function renderizarObras(filtro = '') {
@@ -1083,7 +1122,7 @@
                 const card = document.createElement('div');
                 card.className = 'obra-card';
                 card.innerHTML = `
-                    <div class="obra-info" onclick="abrirPlanilla(${obra.id})">
+                    <div class="obra-info" onclick="abrirEstaciones(${obra.id})">
                         <i class="fa-regular fa-folder-open" style="font-size: 1.2rem; color: var(--accent-color);"></i>
                         <div>
                             <strong>${obra.proyecto}</strong>
@@ -1161,6 +1200,103 @@
             }
         }
 
+        // --- GESTIÓN DE ESTACIONES ---
+        function abrirEstaciones(id) {
+            obraActualId = id;
+            let obra = obras.find(o => o.id === id);
+            obra.ultimaMod = Date.now();
+            guardarDatosLocal();
+
+            document.getElementById('titulo-estaciones').innerText = obra.proyecto;
+            document.getElementById('info-general-obra-estaciones').innerHTML = `
+                <p><strong>Proyecto:</strong> ${obra.proyecto}</p>
+                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Ubicación:</strong> ${obra.ubicacion || 'N/A'}</p>
+                <p><strong>Zona:</strong> ${obra.zona}</p>
+            `;
+            cambiarVista('estaciones-view');
+            renderizarEstaciones();
+        }
+
+        function renderizarEstaciones(filtro = '') {
+            let contenedor = document.getElementById('lista-estaciones');
+            contenedor.innerHTML = '';
+            let lista = registros[obraActualId] || [];
+            let estacionesUnicas = [...new Set(lista.map(r => r.estacion))].filter(Boolean);
+
+            let filtradas = estacionesUnicas.filter(est => est.toLowerCase().includes(filtro.toLowerCase()));
+
+            if (filtradas.length === 0) {
+                contenedor.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">No hay estaciones creadas en esta obra.</p>';
+                return;
+            }
+
+            filtradas.forEach(est => {
+                let card = document.createElement('div');
+                card.className = 'estacion-card';
+                card.innerHTML = `
+                    <div class="estacion-info" onclick="abrirPlanillaEstacion('${est}')">
+                        <i class="fa-solid fa-location-dot" style="font-size: 1.2rem; color: var(--accent-color);"></i>
+                        <div>
+                            <strong>${est}</strong>
+                            <div style="font-size: 0.8rem; color: #666;">Haz clic para ver la planilla de esta estación</div>
+                        </div>
+                    </div>
+                    <div class="estacion-actions">
+                        <button class="btn-delete" onclick="eliminarEstacion('${est}')" title="Eliminar Estación"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+        }
+
+        function filtrarEstaciones() { renderizarEstaciones(document.getElementById('search-estacion').value); }
+
+        function abrirModalCrearEstacion() {
+            document.getElementById('input-nueva-estacion').value = '';
+            document.getElementById('modal-estacion').classList.add('show');
+            setTimeout(() => document.getElementById('input-nueva-estacion').focus(), 100);
+        }
+
+        function cerrarModalCrearEstacion() {
+            document.getElementById('modal-estacion').classList.remove('show');
+        }
+
+        function guardarNuevaEstacion() {
+            let nuevaEst = document.getElementById('input-nueva-estacion').value.trim();
+            if (!nuevaEst) {
+                alert('El nombre de la estación es obligatorio');
+                return;
+            }
+            
+            // Creamos un registro base o simplemente abrimos la planilla con esa estación para que agreguen ítems
+            estacionActual = nuevaEst;
+            cerrarModalCrearEstacion();
+            abrirPlanillaEstacion(nuevaEst);
+        }
+
+        function eliminarEstacion(est) {
+            if (confirm(`¿Desea eliminar la estación "${est}" y todos sus registros asociados?`)) {
+                registros[obraActualId] = registros[obraActualId].filter(r => r.estacion !== est);
+                guardarDatosLocal();
+                renderizarEstaciones();
+            }
+        }
+
+        function abrirPlanillaEstacion(est) {
+            estacionActual = est;
+            let obra = obras.find(o => o.id === obraActualId);
+
+            document.getElementById('titulo-planilla').innerText = `${obra.proyecto} - ${est}`;
+            document.getElementById('info-general-obra').innerHTML = `
+                <p><strong>Proyecto:</strong> ${obra.proyecto} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Estación:</strong> ${est}</p>
+                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Ubicación:</strong> ${obra.ubicacion || 'N/A'}</p>
+            `;
+            cambiarVista('planilla-view');
+            actualizarSelectEstaciones();
+            document.getElementById('filtro-estacion-select').value = est;
+            renderizarRegistros();
+        }
+
         // --- CONSOLIDADO DE MATERIALES ---
         function abrirConsolidadoMateriales() {
             let tbody = document.getElementById('tabla-consolidado-body');
@@ -1173,7 +1309,6 @@
                 return;
             }
 
-            // Agrupar y sumar cantidades por ítem
             let consolidadoMap = {};
             lista.forEach(reg => {
                 let itemKey = reg.item.trim();
@@ -1188,12 +1323,10 @@
                 consolidadoMap[itemKey].cantidadTotal += cantidad;
             });
 
-            // Convertir a array y ordenar alfabéticamente por la descripción
             let arrayConsolidado = Object.values(consolidadoMap).sort((a, b) => {
                 return a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'accent' });
             });
 
-            // Renderizar filas en el modal
             arrayConsolidado.forEach(item => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -1351,23 +1484,6 @@
             lector.readAsText(archivo);
         }
 
-        function abrirPlanilla(id) {
-            obraActualId = id;
-            let obra = obras.find(o => o.id === id);
-            obra.ultimaMod = Date.now();
-            guardarDatosLocal();
-
-            document.getElementById('titulo-planilla').innerText = obra.proyecto;
-            document.getElementById('info-general-obra').innerHTML = `
-                <p><strong>Proyecto:</strong> ${obra.proyecto}</p>
-                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Ubicación:</strong> ${obra.ubicacion || 'N/A'}</p>
-                <p><strong>Zona:</strong> ${obra.zona}</p>
-            `;
-            cambiarVista('planilla-view');
-            actualizarSelectEstaciones();
-            renderizarRegistros();
-        }
-
         function actualizarSelectEstaciones() {
             let select = document.getElementById('filtro-estacion-select');
             let lista = registros[obraActualId] || [];
@@ -1385,7 +1501,7 @@
             let lista = registros[obraActualId] || [];
 
             let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
-            let filtroEstacion = document.getElementById('filtro-estacion-select').value;
+            let filtroEstacion = estacionActual; // Fijado por la estación seleccionada
             let filtroFecha = document.getElementById('filtro-fecha-input').value;
 
             let filtradosConIndex = lista.map((reg, index) => ({ reg, index })).filter(({ reg }) => {
@@ -1396,7 +1512,7 @@
             });
 
             if (filtradosConIndex.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros cargados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros cargados para esta estación.</td></tr>`;
                 return;
             }
 
@@ -1470,7 +1586,6 @@
 
         function limpiarFiltros() {
             document.getElementById('filtro-item-input').value = '';
-            document.getElementById('filtro-estacion-select').value = '';
             document.getElementById('filtro-fecha-input').value = '';
             renderizarRegistros();
         }
@@ -1495,15 +1610,14 @@
                 document.getElementById('reg-descripcion').value = '';
                 document.getElementById('reg-cantidad').value = '1';
                 document.getElementById('reg-serie').value = '';
+                document.getElementById('reg-estacion').value = estacionActual; // Asignación automática de la estación actual
 
                 let lista = registros[obraActualId] || [];
                 if (lista.length > 0) {
                     let ultimo = lista[lista.length - 1];
-                    document.getElementById('reg-estacion').value = ultimo.estacion || '';
                     document.getElementById('reg-fecha').value = ultimo.fecha || new Date().toISOString().split('T')[0];
                     document.getElementById('reg-ndescargo').value = ultimo.ndescargo || '';
                 } else {
-                    document.getElementById('reg-estacion').value = '';
                     document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
                     document.getElementById('reg-ndescargo').value = '';
                 }
@@ -1525,7 +1639,7 @@
 
         function guardarRegistro() {
             let id = document.getElementById('reg-id-edit').value;
-            let estacion = document.getElementById('reg-estacion').value.trim();
+            let estacion = estacionActual;
             let item = document.getElementById('reg-item').value.trim();
             let descripcion = document.getElementById('reg-descripcion').value.trim();
             let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 1;
@@ -1541,7 +1655,6 @@
             if (!registros[obraActualId]) registros[obraActualId] = [];
 
             let filtroItemActual = document.getElementById('filtro-item-input').value;
-            let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
             let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
 
             if (id) {
@@ -1571,7 +1684,6 @@
             actualizarSelectEstaciones();
 
             document.getElementById('filtro-item-input').value = filtroItemActual;
-            document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
             document.getElementById('filtro-fecha-input').value = filtroFechaActual;
 
             renderizarRegistros();
@@ -1582,7 +1694,6 @@
         function eliminarRegistro(id) {
             if (confirm('¿Desea eliminar este registro?')) {
                 let filtroItemActual = document.getElementById('filtro-item-input').value;
-                let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
                 let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
 
                 registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
@@ -1590,7 +1701,6 @@
                 actualizarSelectEstaciones();
 
                 document.getElementById('filtro-item-input').value = filtroItemActual;
-                document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
                 document.getElementById('filtro-fecha-input').value = filtroFechaActual;
 
                 renderizarRegistros();
