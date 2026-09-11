@@ -1608,53 +1608,60 @@
         }
 
         function cargarObraJSON(event) {
-            const archivo = event.target.files[0];
-            if (!archivo) return;
+    const archivo = event.target.files[0];
+    if (!archivo) return;
 
-            const lector = new FileReader();
-            lector.onload = function(e) {
-                try {
-                    const contenido = JSON.parse(e.target.result);
+    const lector = new FileReader();
+    lector.onload = function(e) {
+        try {
+            const contenido = JSON.parse(e.target.result);
 
-                    if (contenido.esObraIndividual && contenido.obra) {
-                        let nuevaObra = contenido.obra;
-                        let nuevoId = Date.now();
-                        nuevaObra.id = nuevoId;
-                        nuevaObra.ultimaMod = Date.now();
+            if (contenido.esObraIndividual && contenido.obra) {
+                let nuevaObra = contenido.obra;
+                let nuevoId = Date.now();
+                nuevaObra.id = nuevoId;
+                nuevaObra.ultimaMod = Date.now();
 
-                        obras.push(nuevaObra);
-                        registros[nuevoId] = contenido.registros || [];
+                obras.push(nuevaObra);
+                registros[nuevoId] = contenido.registros || [];
 
-                        if (contenido.itemsMaster) {
-                            contenido.itemsMaster.forEach(itemM => {
-                                if (!itemsMaster.some(i => i.item === itemM.item)) {
-                                    itemsMaster.push(itemM);
-                                }
-                            });
+                if (contenido.itemsMaster) {
+                    contenido.itemsMaster.forEach(itemM => {
+                        if (!itemsMaster.some(i => i.item === itemM.item)) {
+                            itemsMaster.push(itemM);
                         }
-
-                        guardarDatosLocal();
-                        renderizarObras();
-                        alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito para continuarla!`);
-                    } else if (contenido.obras && contenido.registros) {
-                        if (confirm('Este archivo contiene un respaldo completo. ¿Desea fusionarlo o reemplazar los datos actuales?')) {
-                            obras = contenido.obras;
-                            registros = contenido.registros;
-                            if (contenido.itemsMaster) itemsMaster = contenido.itemsMaster;
-                            guardarDatosLocal();
-                            renderizarObras();
-                            alert('¡Datos restaurados con éxito!');
-                        }
-                    } else {
-                        alert('El formato del archivo JSON no es válido.');
-                    }
-                } catch (error) {
-                    alert('Error al leer el archivo JSON.');
+                    });
                 }
-                event.target.value = '';
-            };
-            lector.readAsText(archivo);
+
+                guardarDatosLocal();
+                renderizarObras();
+                alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito para continuarla!`);
+            } else if (contenido.obras && contenido.registros) {
+                if (confirm('Este archivo contiene un respaldo completo. ¿Desea fusionarlo o reemplazar los datos actuales?')) {
+                    obras = contenido.obras;
+                    registros = contenido.registros;
+                    if (contenido.itemsMaster) {
+                        contenido.itemsMaster.forEach(itemM => {
+                            if (!itemsMaster.some(i => i.item === itemM.item)) {
+                                itemsMaster.push(itemM);
+                            }
+                        });
+                    }
+                    guardarDatosLocal();
+                    renderizarObras();
+                    alert('¡Datos restaurados con éxito!');
+                }
+            } else {
+                alert('El formato del archivo JSON no es válido.');
+            }
+        } catch (error) {
+            alert('Error al leer el archivo JSON.');
+            console.error(error);
         }
+        event.target.value = '';
+    };
+    lector.readAsText(archivo);
+}
 
         function actualizarSelectEstaciones() {
             let select = document.getElementById('filtro-estacion-select');
