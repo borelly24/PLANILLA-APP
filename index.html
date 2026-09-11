@@ -1800,67 +1800,197 @@ function guardarRegistro() {
     renderizarRegistros();
 }
 
-function renderizarRegistros() {
-    let tbody = document.getElementById('tabla-registros-body');
-    tbody.innerHTML = '';
-    let lista = registros[obraActualId] || [];
+let registroDragging = null;
 
-    let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
-    let filtroEstacion = estacionActual;
-    let filtroFecha = document.getElementById('filtro-fecha-input').value;
+        function renderizarRegistros() {
+            let tbody = document.getElementById('tabla-registros-body');
+            tbody.innerHTML = '';
+            let lista = registros[obraActualId] || [];
 
-    let filtrados = lista.filter(reg => {
-        let matchEstacion = !filtroEstacion || reg.estacion === filtroEstacion;
-        let matchItem = !filtroItem || reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
-        let matchFecha = !filtroFecha || reg.fecha === filtroFecha;
-        return matchEstacion && matchItem && matchFecha;
-    });
+            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
+            let filtroEstacion = estacionActual;
+            let filtroFecha = document.getElementById('filtro-fecha-input').value;
 
-    if (filtrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros en esta estación.</td></tr>`;
-        return;
-    }
+            let filtrados = lista.filter(reg => {
+                let matchEstacion = !filtroEstacion || reg.estacion === filtroEstacion;
+                let matchItem = !filtroItem || reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
+                let matchFecha = !filtroFecha || reg.fecha === filtroFecha;
+                return matchEstacion && matchItem && matchFecha;
+            });
 
-    filtrados.forEach(reg => {
-        let itemStr = String(reg.item).trim();
-        let esMenorOIgualA3Cifras = itemStr.length <= 3;
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros en esta estación.</td></tr>`;
+                return;
+            }
 
-        let tr = document.createElement('tr');
-        tr.className = 'draggable-row';
-        if (esMenorOIgualA3Cifras) {
-            tr.classList.add('highlight-green');
+            filtrados.forEach(reg => {
+                let itemStr = String(reg.item).trim();
+                let esMenorOIgualA3Cifras = itemStr.length <= 3;
+
+                let tr = document.createElement('tr');
+                tr.className = 'draggable-row';
+                if (esMenorOIgualA3Cifras) {
+                    tr.classList.add('highlight-green');
+                }
+                tr.draggable = true;
+
+                tr.ondragstart = (e) => {
+                    registroDragging = reg.id;
+                    e.dataTransfer.effectAllowed = 'move';
+                    tr.classList.add('dragging');
+                };
+                tr.ondragend = () => {
+                    tr.classList.remove('dragging');
+                    document.querySelectorAll('#tabla-registros-body tr').forEach(row => row.classList.remove('drag-over'));
+                };
+                tr.ondragover = (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                };
+                tr.ondragenter = () => tr.classList.add('drag-over');
+                tr.ondragleave = () => tr.classList.remove('drag-over');
+                tr.ondrop = (e) => {
+                    e.preventDefault();
+                    tr.classList.remove('drag-over');
+                    if (!registroDragging || registroDragging === reg.id) return;
+
+                    let listaCompleta = registros[obraActualId];
+                    let fromIdx = listaCompleta.findIndex(r => r.id === registroDragging);
+                    let toIdx = listaCompleta.findIndex(r => r.id === reg.id);
+
+                    if (fromIdx === -1 || toIdx === -1) return;
+
+                    let [movido] = listaCompleta.splice(fromIdx, 1);
+                    listaCompleta.splice(toIdx, 0, movido);
+
+                    registros[obraActualId] = listaCompleta;
+                    guardarDatosLocal();
+                    renderizarRegistros();
+                    registroDragging = null;
+                };
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
+                        ${reg.estacion}
+                    </td>
+                    <td><strong>${reg.item}</strong></td>
+                    <td>${reg.descripcion}</td>
+                    <td>${reg.cantidad}</td>
+                    <td>${reg.fecha}</td>
+                    <td>${reg.ndescargo || ''}</td>
+                    <td>${reg.serie || ''}</td>
+                    <td>
+                        <button class="btn-edit" onclick="abrirModalRegistro(${reg.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        tr.innerHTML = `
-            <td>${reg.estacion}</td>
-            <td><strong>${reg.item}</strong></td>
-            <td>${reg.descripcion}</td>
-            <td>${reg.cantidad}</td>
-            <td>${reg.fecha}</td>
-            <td>${reg.ndescargo || '-'}</td>
-            <td>${reg.serie || '-'}</td>
-            <td>
-                <button class="btn-edit" onclick="abrirModalRegistro(${reg.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-delete" onclick="eliminarRegistro(${reg.id})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function eliminarRegistro(id) {
-    if (confirm('¿Desea eliminar este registro?')) {
-        registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
-        guardarDatosLocal();
-        renderizarRegistros();
-    }
-}
+        function eliminarRegistro(id) {
+            if (confirm('¿Desea eliminar este registro?')) {
+                registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
+                guardarDatosLocal();
+                renderizarRegistros();
+            }
+        }
 
 function limpiarFiltros() {
     document.getElementById('filtro-item-input').value = '';
     document.getElementById('filtro-fecha-input').value = '';
     renderizarRegistros();
 }
+ function renderizarItemsMaster(filtro = '') {
+            let tbody = document.getElementById('tabla-items-master');
+            tbody.innerHTML = '';
+            let filtrados = itemsMaster.filter(i => 
+                i.item.toLowerCase().includes(filtro.toLowerCase()) || 
+                i.desc.toLowerCase().includes(filtro.toLowerCase())
+            );
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No se encontraron ítems.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach(itemObj => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${itemObj.item}</strong></td>
+                    <td>${itemObj.desc}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editarItemMaster('${itemObj.item}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-delete" onclick="eliminarItemMaster('${itemObj.item}')" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarItemsMaster() {
+            renderizarItemsMaster(document.getElementById('search-item-master').value);
+        }
+
+        function abrirModalItemMaster(itemCod = null) {
+            document.getElementById('modal-item-master').classList.add('show');
+            if (itemCod) {
+                let item = itemsMaster.find(i => i.item === itemCod);
+                document.getElementById('item-original-id').value = item.item;
+                document.getElementById('master-item-code').value = item.item;
+                document.getElementById('master-item-desc').value = item.desc;
+            } else {
+                document.getElementById('item-original-id').value = '';
+                document.getElementById('master-item-code').value = '';
+                document.getElementById('master-item-desc').value = '';
+            }
+        }
+
+        function cerrarModalItemMaster() {
+            document.getElementById('modal-item-master').classList.remove('show');
+        }
+
+        function guardarItemMaster() {
+            let originalId = document.getElementById('item-original-id').value;
+            let codigo = document.getElementById('master-item-code').value.trim();
+            let desc = document.getElementById('master-item-desc').value.trim();
+
+            if (!codigo || !desc) {
+                alert('El código y la descripción son obligatorios.');
+                return;
+            }
+
+            if (originalId) {
+                let item = itemsMaster.find(i => i.item === originalId);
+                if (item) {
+                    item.item = codigo;
+                    item.desc = desc;
+                }
+            } else {
+                if (itemsMaster.some(i => i.item === codigo)) {
+                    alert('Ya existe un ítem con este código.');
+                    return;
+                }
+                itemsMaster.push({ item: codigo, desc: desc });
+            }
+
+            guardarDatosLocal();
+            cerrarModalItemMaster();
+            renderizarItemsMaster();
+        }
+
+        function editarItemMaster(codigo) {
+            abrirModalItemMaster(codigo);
+        }
+
+        function eliminarItemMaster(codigo) {
+            if (confirm(`¿Desea eliminar el ítem ${codigo}?`)) {
+                itemsMaster = itemsMaster.filter(i => i.item !== codigo);
+                guardarDatosLocal();
+                renderizarItemsMaster();
+            }
+        }       
     </script>
 </body>
 </html>
