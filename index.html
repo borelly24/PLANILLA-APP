@@ -3,1709 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planilla App</title>
-    <!-- Estilos y FontAwesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #1e4620;
-            --primary-dark: #122d14;
-            --accent-color: #2e7d32;
-            --light-bg: #f4f6f5;
-            --success-color: #d4edda;
-            --border-color: #ccc;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: var(--light-bg); color: #333; }
-        
-        /* Contenedores de Vistas */
-        .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 80px;}
-        .view.active { display: block; }
-
-        /* Encabezados */
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        header h1 { font-size: 1.2rem; }
-        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
-
-        /* Botón y Menú Desplegable Superior de Exportación / Carga */
-        .dropdown-container {
-            position: relative;
-            margin: 15px 0 10px 0;
-        }
-        .btn-top-dropdown {
-            width: 100%;
-            background-color: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 10px 12px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: #333;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            font-weight: bold;
-        }
-        .btn-top-dropdown:hover { background-color: #f1f1f1; }
-        
-        .top-dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 50;
-            margin-top: 4px;
-            overflow: hidden;
-        }
-        .top-dropdown-menu.show { display: block; }
-        .top-dropdown-menu button {
-            width: 100%;
-            padding: 12px 15px;
-            background: none;
-            border: none;
-            text-align: left;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid #eee;
-            color: #333;
-        }
-        .top-dropdown-menu button:last-child { border-bottom: none; }
-        .top-dropdown-menu button:hover { background-color: #f1f1f1; }
-
-        /* Buscadores y Filtros Generales */
-        .search-box-general {
-            position: relative;
-            margin: 15px 0;
-        }
-        .search-box-general input {
-            width: 100%;
-            padding: 10px 10px 10px 35px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 0.95rem;
-        }
-        .search-box-general i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #777;
-        }
-
-        /* FILTROS DE CAMPO */
-        .filtros-container {
-            background-color: #e9ecef;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            padding: 10px 12px;
-            margin-bottom: 12px;
-        }
-        .filtros-header {
-            font-weight: bold;
-            font-size: 13px;
-            color: #333;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
-        }
-        .filtros-inputs-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .search-box-item {
-            flex: 1.5;
-            display: flex;
-            align-items: center;
-            background: #fff;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            padding: 6px 10px;
-        }
-        .search-box-item input {
-            border: none;
-            outline: none;
-            width: 100%;
-            font-size: 13px;
-            color: #495057;
-            background: transparent;
-        }
-        .select-box-estacion {
-            flex: 1;
-        }
-        .select-box-estacion select {
-            width: 100%;
-            background: #fff;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            padding: 7px 8px;
-            font-size: 13px;
-            color: #333;
-            outline: none;
-            cursor: pointer;
-        }
-        .date-box-filter {
-            background: #fff;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            padding: 6px 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            gap: 4px;
-        }
-        .date-box-filter input {
-            border: none;
-            outline: none;
-            font-size: 11px;
-            background: transparent;
-            cursor: pointer;
-            width: 95px;
-        }
-
-        /* Tarjetas de Obras */
-        .obra-card {
-            background: white;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-left: 5px solid var(--accent-color);
-        }
-        .obra-info { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
-        .obra-actions { display: flex; gap: 12px; }
-        .obra-actions button { background: none; border: none; font-size: 1.1rem; cursor: pointer; }
-        .btn-edit { color: #2e7d32; }
-        .btn-export { color: #0277bd; }
-        .btn-delete { color: #c62828; }
-
-        /* Botón Flotante (FAB) */
-        .fab-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 100;
-        }
-        .fab {
-            background-color: var(--accent-color);
-            color: white;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            border: none;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .fab:active { transform: scale(0.9); }
-
-        /* Menú Desplegable FAB */
-        .fab-menu {
-            display: none;
-            position: absolute;
-            bottom: 70px;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            width: 220px;
-            overflow: hidden;
-        }
-        .fab-menu.show { display: block; }
-        .fab-menu button {
-            width: 100%;
-            padding: 12px 15px;
-            background: none;
-            border: none;
-            text-align: left;
-            font-size: 0.9rem;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        .fab-menu button:hover { background-color: #f1f1f1; }
-
-        /* Tablas y Contenedor Deslizable */
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-bottom: 15px;
-        }
-
-        table {
-            width: 100%;
-            min-width: 680px;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-        }
-
-        th, td {
-            padding: 8px 6px;
-            border: 1px solid #ddd;
-            text-align: left;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-        th { 
-            background-color: var(--primary-color); 
-            color: white; 
-            position: sticky; 
-            top: 0;           
-            z-index: 10;      
-        }
-
-        /* Estilos para Drag & Drop Móvil/Escritorio */
-        tr.draggable-row {
-            touch-action: none;
-            transition: background-color 0.2s;
-        }
-        tr.dragging {
-            opacity: 0.4;
-            background-color: #e2e8f0 !important;
-        }
-        tr.drag-over {
-            border-top: 2px dashed var(--accent-color);
-        }
-        .drag-handle {
-            cursor: grab;
-            color: #888;
-            display: inline-block;
-            font-size: 12px;
-            width: 10px;
-            text-align: center;
-        }
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        .highlight-green {
-            background-color: var(--success-color) !important;
-        }
-
-        .general-data {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-        .general-data p { margin: 4px 0; }
-
-        /* Modales */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 15px;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold; }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-        .btn-cancel { background-color: #ccc; color: #333; }
-        .btn-save { background-color: var(--accent-color); color: white; }
-    </style>
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#1e4620">
+    <title>Gestión de Redes Eléctricas - Obras y Estaciones</title>
+    <!-- Tailwind CSS para un diseño limpio y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800 font-sans">
 
-    <!-- VISTA 1: VENTANA PRINCIPAL -->
-    <div id="main-view" class="view active">
-        <header>
-            <h1>PLANILLA APP</h1>
-            <i class="fa-solid fa-bolt"></i>
-        </header>
-
-        <!-- BOTÓN Y MENÚ DESPLEGABLE DE RESPALDO / COMPARTIR -->
-        <div class="dropdown-container">
-            <button class="btn-top-dropdown" onclick="toggleTopDropdownMenu()">
-                <span><i class="fa-solid fa-database" style="color: #2e7d32; margin-right: 6px;"></i> Opciones de Archivos y Respaldo</span>
-                <i class="fa-solid fa-chevron-down" id="top-dropdown-icon"></i>
-            </button>
-            <div class="top-dropdown-menu" id="top-dropdown-menu">
-                <button onclick="abrirModalExportarObra(); cerrarTopDropdownMenu();">
-                    <i class="fa-solid fa-file-export" style="color: #0277bd; width: 20px;"></i> Exportar Obra
-                </button>
-                <button onclick="exportarTodoJSON(); cerrarTopDropdownMenu();">
-                    <i class="fa-solid fa-database" style="color: #2e7d32; width: 20px;"></i> Exportar Todo
-                </button>
-                <button onclick="document.getElementById('input-cargar-json').click(); cerrarTopDropdownMenu();">
-                    <i class="fa-solid fa-file-import" style="color: #c62828; width: 20px;"></i> Cargar Obra
-                </button>
-            </div>
-            <input type="file" id="input-cargar-json" accept=".json" style="display: none;" onchange="cargarObraJSON(event)">
-        </div>
-
-        <div class="search-box-general">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="search-obra" placeholder="Buscar Obra..." onkeyup="filtrarObras()">
-        </div>
-
-        <div id="lista-obras"></div>
-
-        <div class="fab-container">
-            <div class="fab-menu" id="fab-menu">
-                <button onclick="abrirVistaItems()"><i class="fa-solid fa-list"></i> 1- Lista de Ítems</button>
-                <button onclick="abrirModalObra()"><i class="fa-solid fa-plus-circle"></i> 2- Crear Obra</button>
-            </div>
-            <button class="fab" onclick="toggleFabMenu()"><i class="fa-solid fa-plus" id="fab-icon"></i></button>
-        </div>
-    </div>
-
-    <!-- VISTA 2: VENTANA DE PLANILLA / REGISTRO DE OPERACIÓN -->
-    <div id="planilla-view" class="view">
-        <header>
-            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
-            <h1 id="titulo-planilla">REGISTRO DE OPERACION</h1>
-            <div></div>
-        </header>
-
-        <!-- BOTÓN Y MENÚ DESPLEGABLE EN VISTA PLANILLA -->
-        <div class="dropdown-container">
-            <button class="btn-top-dropdown" onclick="toggleTopDropdownMenuPlanilla()">
-                <span><i class="fa-solid fa-boxes-stacked" style="color: #2e7d32; margin-right: 6px;"></i> Opciones de Planilla y Materiales</span>
-                <i class="fa-solid fa-chevron-down" id="top-dropdown-icon-planilla"></i>
-            </button>
-            <div class="top-dropdown-menu" id="top-dropdown-menu-planilla">
-                <button onclick="abrirConsolidadoMateriales(); cerrarTopDropdownMenuPlanilla();">
-                    <i class="fa-solid fa-calculator" style="color: #0277bd; width: 20px;"></i> Consolidado de Materiales
-                </button>
-            </div>
-        </div>
-
-        <div class="general-data" id="info-general-obra"></div>
-
-        <!-- SECCIÓN DE FILTROS DE CAMPO -->
-        <div class="filtros-container">
-            <div class="filtros-header">FILTROS DE CAMPO</div>
-            <div class="filtros-inputs-row">
-                <div class="search-box-item">
-                    <i class="fa-solid fa-magnifying-glass" style="color: #777; margin-right: 6px; font-size: 12px;"></i>
-                    <input type="text" id="filtro-item-input" placeholder="Buscar Ítem..." onkeyup="renderizarRegistros()">
-                </div>
-                <div class="select-box-estacion">
-                    <select id="filtro-estacion-select" onchange="renderizarRegistros()">
-                        <option value="">Estación</option>
-                    </select>
-                </div>
-                <div class="date-box-filter" title="Filtrar por Fecha">
-                    <i class="fa-solid fa-calendar-days" style="color: #333; font-size: 12px;"></i>
-                    <input type="date" id="filtro-fecha-input" onchange="renderizarRegistros()">
-                </div>
-                <div style="cursor: pointer; padding: 4px;" onclick="limpiarFiltros()" title="Limpiar Filtros">
-                    <i class="fa-solid fa-rotate-left" style="color: #555; font-size: 13px;"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">Estación</th>
-                        <th style="width: 8%;">Ítems</th>
-                        <th style="width: 20%;">Descripción</th>
-                        <th style="width: 8%;">Cant.</th>
-                        <th style="width: 16%;">Fecha</th>
-                        <th style="width: 11%;">Descargo</th>
-                        <th style="width: 20%;">Series</th>
-                        <th style="width: 4%;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-registros-body">
-                </tbody>
-            </table>
-        </div>
-
-        <div class="fab-container">
-            <button class="fab" onclick="abrirModalRegistro()"><i class="fa-solid fa-plus"></i></button>
-        </div>
-    </div>
-
-    <!-- VISTA 3: VENTANA DE ÍTEMS -->
-    <div id="items-view" class="view">
-        <header>
-            <button class="back-btn" onclick="volverPrincipal()"><i class="fa-solid fa-arrow-left"></i></button>
-            <h1>LISTA DE ÍTEMS</h1>
-            <div></div>
-        </header>
-
-        <div class="search-box-general" style="margin-top: 15px;">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="search-item-master" placeholder="Buscar ítem o descripción..." onkeyup="filtrarItemsMaster()">
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Ítem</th>
-                        <th>Descripción</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-items-master"></tbody>
-            </table>
-        </div>
-
-        <div class="fab-container">
-            <button class="fab" onclick="abrirModalItemMaster()"><i class="fa-solid fa-plus"></i></button>
-        </div>
-    </div>
-
-    <!-- MODAL: CONSOLIDADO DE MATERIALES -->
-    <div class="modal" id="modal-consolidado">
-        <div class="modal-content" style="max-width: 550px;">
-            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-calculator"></i> Consolidado de Materiales</h3>
-            <div class="table-container" style="max-height: 350px; overflow-y: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Ítem</th>
-                            <th>Descripción</th>
-                            <th>Cant. Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-consolidado-body">
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-save" onclick="exportarConsolidadoCSV()"><i class="fa-solid fa-file-excel"></i> Exportar Consolidado CSV</button>
-                <button class="btn btn-cancel" onclick="cerrarConsolidadoMateriales()">Cerrar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: NUEVA / EDITAR OBRA -->
-    <div class="modal" id="modal-obra">
-        <div class="modal-content">
-            <h3 id="modal-obra-title" style="margin-bottom: 15px;">Nueva Obra</h3>
-            <input type="hidden" id="obra-id-edit">
-            <div class="form-group">
-                <label>Proyecto*</label>
-                <input type="text" id="input-proyecto" placeholder="Ej: HIS_AV659">
-            </div>
-            <div class="form-group">
-                <label>Circuito</label>
-                <input type="text" id="input-circuito" placeholder="Ej: SAN SEBASTIAN">
-            </div>
-            <div class="form-group">
-                <label>Ubicación</label>
-                <input type="text" id="input-ubicacion" placeholder="Ej: Magangué, Bolívar">
-            </div>
-            <div class="form-group">
-                <label>Zona</label>
-                <select id="input-zona">
-                    <option value="Urbano">Urbano</option>
-                    <option value="Rural">Rural</option>
-                </select>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="cerrarModalObra()">Cancelar</button>
-                <button class="btn btn-save" onclick="guardarObra()">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: SELECCIONAR OBRA PARA EXPORTAR -->
-    <div class="modal" id="modal-exportar-obra">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 15px;">Exportar Obra Específica</h3>
-            <div class="form-group">
-                <label>Selecciona la obra a compartir con tu compañero:</label>
-                <select id="select-obra-exportar" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;"></select>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="cerrarModalExportarObra()">Cancelar</button>
-                <button class="btn btn-save" onclick="ejecutarExportarObraSeleccionada()">Exportar JSON</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: NUEVO / EDITAR REGISTRO -->
-    <div class="modal" id="modal-registro">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 15px;" id="modal-reg-title">Nuevo Registro</h3>
-            <input type="hidden" id="reg-id-edit">
-            <div class="form-group">
-                <label>Estación*</label>
-                <input type="text" id="reg-estacion" placeholder="Ej: EPP 01-1">
-            </div>
-            <div class="form-group">
-                <label>Ítem*</label>
-                <input type="text" id="reg-item" placeholder="Ej: 80 o 1465239" oninput="autocompletarDescripcion(this.value)">
-            </div>
-            <div class="form-group">
-                <label>Descripción (Automática o Manual)</label>
-                <textarea id="reg-descripcion" rows="2" placeholder="Descripción del material o labor"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Cantidad*</label>
-                <input type="number" id="reg-cantidad" value="1">
-            </div>
-            <div class="form-group">
-                <label>Fecha*</label>
-                <input type="date" id="reg-fecha">
-            </div>
-            <div class="form-group">
-                <label>N. Descargo</label>
-                <input type="text" id="reg-ndescargo" placeholder="Número de descargo">
-            </div>
-            <div class="form-group">
-                <label>Serie</label>
-                <input type="text" id="reg-serie" placeholder="Serial del equipo (si aplica)">
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="cerrarModalRegistro()">Cancelar</button>
-                <button class="btn btn-save" onclick="guardarRegistro()">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: NUEVO / EDITAR ITEM MAESTRO -->
-    <div class="modal" id="modal-item-master">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 15px;">Gestión de Ítem</h3>
-            <input type="hidden" id="item-original-id">
-            <div class="form-group">
-                <label>Código de Ítem*</label>
-                <input type="text" id="master-item-code" placeholder="Ej: 80">
-            </div>
-            <div class="form-group">
-                <label>Descripción*</label>
-                <textarea id="master-item-desc" rows="3" placeholder="Descripción detallada..."></textarea>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="cerrarModalItemMaster()">Cancelar</button>
-                <button class="btn btn-save" onclick="guardarItemMaster()">Guardar</button>
-            </div>
-        </div>
+    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl flex flex-col">
+        <!-- Contenido dinámico inyectado por JS -->
     </div>
 
     <script>
-        let obras = JSON.parse(localStorage.getItem('planilla_obras')) || [
-            { id: 1, proyecto: 'HIS_AV659', circuito: 'SAN SEBASTIAN', ubicacion: 'Magangué', zona: 'Urbano', ultimaMod: Date.now() - 1000 }
-        ];
-
-        let registros = JSON.parse(localStorage.getItem('planilla_registros')) || {
-            1: [
-                { id: 101, estacion: 'EPP 01-1', item: '80', descripcion: 'Colocación de poste de concreto 12m-2500-1600-1324-1030-735-500 daN', cantidad: 1, fecha: '2026-05-10', ndescargo: '123', serie: '' },
-                { id: 102, estacion: 'EPP 01-1', item: '1465239', descripcion: 'POSTE HPC/HPV 12MX1030 DAN(CR)', cantidad: 1, fecha: '2026-05-10', ndescargo: '124', serie: 'ABC99' }
+        // Estado de la aplicación
+        let state = {
+            currentView: 'home', // 'home' (obras), 'stations' (estaciones de una obra), 'materials' (materiales de una estación), 'consolidated' (consolidado general de obra)
+            currentObra: null,
+            currentStation: null,
+            obras: [
+                {
+                    id: 1,
+                    nombre: "Normalización Redes B.T. Barrio San Jose",
+                    estaciones: [
+                        { nombre: "Apoyo 01", materiales: [{codigo: "ELE001", desc: "Poste de Concreto 12m", cant: 2}, {codigo: "ELE002", desc: "Cable de Acero 3/8", cant: 30}] },
+                        { nombre: "Apoyo 02", materiales: [{codigo: "ELE003", desc: "Transformador 45kVA", cant: 1}] }
+                    ]
+                },
+                {
+                    id: 2,
+                    nombre: "Expansión Media Tensión Sector Sur",
+                    estaciones: [
+                        { nombre: "Poste Troncal 1", materiales: [{codigo: "ELE004", desc: "Seccionador Tripolar", cant: 1}] }
+                    ]
+                }
             ]
         };
 
-        let itemsMaster = JSON.parse(localStorage.getItem('planilla_items_master')) || [
-            { item: '1', desc: 'Inspección Servicio Medida Directa' },
-            { item: '2', desc: 'Instalación completa del suministro (Medida directa)' },
-            { item: '3', desc: 'Instalación completa del suministro (Medida Tecnificada)' },
-            { item: '4', desc: 'Instalación completa de medidor bicuerpo en caja de policarbonato' },
-            { item: '5', desc: 'Instalación completa de medidor bicuerpo en gabinete' },
-            { item: '6', desc: 'Instalación completa redes inteligentes en Poste/Vano – Cable RS 485' },
-            { item: '7', desc: 'Instalación de Concentrador Secundario o Esclava en cruceta CableRS485' },
-            { item: '8', desc: 'Instalación de medidor y adecuación de caja y acometida' },
-            { item: '9', desc: 'Instalación de acometida y adecuación de caja y medidor' },
-            { item: '10', desc: 'Instalación de caja y adecuación de acometida y medidor' },
-            { item: '11', desc: 'Inst caja(gabinete)medidores concentrados(1F,trifil, 3F)config bandera' },
-            { item: '12', desc: 'Instalación de display y caja polimérica' },
-            { item: '13', desc: 'Instalación y suministro de terminales bimetálicos deconexión caja' },
-            { item: '14', desc: 'Instalación de acometida para totalizador de gabinete multifamiliar' },
-            { item: '15', desc: 'Instalación de gabinete en multifamiliares' },
-            { item: '16', desc: 'Instalación o cambio de acometida' },
-            { item: '17', desc: 'Instalación o cambio de acometida y caja' },
-            { item: '18', desc: 'Instalación o cambio de acometida y medidor' },
-            { item: '19', desc: 'Adecuación de acometida' },
-            { item: '20', desc: 'Adecuación de Caja y Acometida' },
-            { item: '21', desc: 'Adecuación caja para medidor o caja para alojar display' },
-            { item: '22', desc: 'Colocación de caja hermética para medidor 1F, 2F o 3F fachada' },
-            { item: '23', desc: 'Instalación o cambio de caja y medidor (Medida tecnificada)' },
-            { item: '24', desc: 'Instalación o cambio de caja y medidor (Medida Directa)' },
-            { item: '25', desc: 'Instalación o cambio de caja y medidor (Medida bicuerpo)' },
-            { item: '26', desc: 'Instalación o cambio de medidor (Medida Directa)' },
-            { item: '27', desc: 'Instalación o cambio de medidor (Medida Tecnificada)' },
-            { item: '28', desc: 'Instalación de medidor bicuerpo' },
-            { item: '29', desc: 'Reposición de medidor bicuerpo o display' },
-            { item: '30', desc: 'Pegado de caja medidor' },
-            { item: '31', desc: 'Programación y configuración de Display Mesh' },
-            { item: '32', desc: 'Retiro de caja (gabinete) para alojar medidores concentrados' },
-            { item: '33', desc: 'Retiro o cambio o instalación de medidor en caja concentradora en piso' },
-            { item: '34', desc: 'Reubicación de caja y medidor o display (Medida Directa)' },
-            { item: '35', desc: 'Reubicación de medidor con cambio de acometida' },
-            { item: '36', desc: 'Revisión de Módulo de Energía de 100, 60, 5 A' },
-            { item: '37', desc: 'Revisión del servicio Medida Directa convencional o bicuerpo' },
-            { item: '38', desc: 'Revisión del servicio (Medida Semidirecta)' },
-            { item: '39', desc: 'Revisión del servicio Medida Directa tecnificada' },
-            { item: '40', desc: 'Normalización ultraligera del servicio (masivo)' },
-            { item: '41', desc: 'Normalización ligera del servicio (masivo)' },
-            { item: '42', desc: 'Revisión y normalización de instalaciones en niveles de tensión 2 y 3' },
-            { item: '43', desc: 'Suspensión aérea BT con retiro de acometida' },
-            { item: '44', desc: 'Suspensión en bornera de medidor' },
-            { item: '45', desc: 'Toma de lectura en sitio para medida indirecta' },
-            { item: '46', desc: 'Normalización de la comunicación del medidor del usuario' },
-            { item: '47', desc: 'Verif y transf de datos Microcontrolador-concentrador con Pocket UPC' },
-            { item: '48', desc: 'Verificar tensión y conexion alimentación antena,repetidr o similares' },
-            { item: '49', desc: 'Cambio de acometida en concentrador en cualquier configuración' },
-            { item: '50', desc: 'Instalación de acometida para totalizador de gabinete multifamiliar' },
-            { item: '51', desc: 'Cambio de fuente de poder en concentrador ubicado en gabinete' },
-            { item: '52', desc: 'no se encontro ninguna cohincidencia con el archivo base' },
-            { item: '53', desc: 'Cambio de Micro, Tarjeta de Control y de interconexión en red aérea' },
-            { item: '54', desc: 'Cambio Modulo de 100, 60 o 5A in concentrador ubicado en red aérea' },
-            { item: '55', desc: 'Cambio en config parcial del concentrador de energía con Pocket UPC' },
-            { item: '56', desc: 'Configuración Física Concentrador Secundario o Esclava – Cable RS 485' },
-            { item: '57', desc: 'Configuració Física Concentrador Secundario o Esclava–Radio Frecuencia' },
-            { item: '58', desc: 'Corte drástico en nivel de tensión I o II' },
-            { item: '59', desc: 'Corte drástico en nivel de tensión II con desmonte de transformador' },
-            { item: '60', desc: 'Corte-reinstalación del servicio de Energia en med directa/semidirecta' },
-            { item: '61', desc: 'Inspección previa para instalación de medida semidirecta/ indirecta' },
-            { item: '62', desc: 'Instalación completa del suministro con medida indirecta' },
-            { item: '63', desc: 'Inst completa del suministro con medida semidirecta(TC tip ventana)' },
-            { item: '64', desc: 'Instalación completa del suministro con medida semidirecta' },
-            { item: '65', desc: 'Instalación de macromedidor con medida directa' },
-            { item: '66', desc: 'Amarre en PCI o Multifamiliares' },
-            { item: '67', desc: 'Cambio caja de macromedidor' },
-            { item: '68', desc: 'Cambiar TCs tipo núcleo partido para mantenimiento de macromedidor' },
-            { item: '69', desc: 'Cambiar TCs tipo ventana para mantenimiento de macromedidor' },
-            { item: '70', desc: 'Cambio completo de los cables de señal en macromedidor' },
-            { item: '71', desc: 'Instalación o cambio de medidor para sistema de medida indirecta' },
-            { item: '72', desc: 'Instalación o cambio de medidor para sistema de medida semidirecta' },
-            { item: '73', desc: 'Reubicación del sistema de medida semidirecta' },
-            { item: '74', desc: 'Reposición de caja hermética y medidor de macromedida' },
-            { item: '75', desc: 'Traslado de medidor e instalación de Modem' },
-            { item: '76', desc: 'Instalación o cambio de Modem' },
-            { item: '77', desc: 'Instalación de Macromedidor con Modem con TC´s tipo ventana' },
-            { item: '78', desc: 'Instalación de Macromedidor con Modem con TC´s de núcleo abierto' },
-            { item: '79', desc: 'Adecuación y/o Reparación de Modem para Macromedidor' },
-            { item: '80', desc: 'Colocación de poste de concreto 12m-2500-1600-1324-1030-735-500 daN' },
-            { item: '81', desc: 'Colocación de poste de concreto 8, 9 o 10m – 1.324 1.030,735 o 500 daN' },
-            { item: '82', desc: 'Colocación de poste de fibra 12,14m -1.600, 1.324, 1.030, 735 /500 daN' },
-            { item: '83', desc: 'Colocación de Poste FV de 8,9 o 10m - 1.600,1.324,1.030,735 o 500 daN' },
-            { item: '84', desc: 'Aplomar poste existente 12, 14 o 16m' },
-            { item: '85', desc: 'Aplomar poste existente 8, 9 o 10m' },
-            { item: '86', desc: 'Reubicación de poste de concreto 12 o 14m' },
-            { item: '87', desc: 'Reubicación de poste de concreto 8, 9 o 10m' },
-            { item: '88', desc: 'Concreto Fc=210kgf/cm2 fundición para poste' },
-            { item: '89', desc: 'Colocación del sistema de puesta a tierra' },
-            { item: '90', desc: 'Colocación de soporte para transformador "TUTO"' },
-            { item: '91', desc: 'Instalación de transformador monofásico 25 kVA a 75 kVA y accesorios' },
-            { item: '92', desc: 'Instalación de transformador monofásico de 3kVA a 15kVA y accesorios' },
-            { item: '93', desc: 'Instalación de transformador 3F de 30,45,75,112.5,150kVA y accesorios' },
-            { item: '94', desc: 'Maniobra de apertura y cierre' },
-            { item: '95', desc: 'Cambio de barraje secundario a transformador monofásico o bifásico' },
-            { item: '96', desc: 'Cambio de barraje secundario a transformador trifásico' },
-            { item: '97', desc: 'Colocación de caja portabornera de 4, 6 o de 8 salidas' },
-            { item: '98', desc: 'Colocación de caja primaria o pararrayos' },
-            { item: '99', desc: 'Colocación de fusible' },
-            { item: '100', desc: 'Colocación de adecuación poste en alineación para 13.2kV' },
-            { item: '101', desc: 'Colocación de adecuación poste en ángulo para 13.2kV' },
-            { item: '102', desc: 'Colocación de adecuación poste en referencia para 13.2kV' },
-            { item: '103', desc: 'Colocación de adecuación poste en terminal para 13.2kV' },
-            { item: '104', desc: 'Colocación de adecuación poste en alineación secundario' },
-            { item: '105', desc: 'Colocación de adecuación poste en ángulo secundario' },
-            { item: '106', desc: 'Colocación de adecuación poste en referencia secundario' },
-            { item: '107', desc: 'Colocación de adecuación poste fin de línea secundario' },
-            { item: '108', desc: 'Colocación de cruceta y tiranta o diagonal' },
-            { item: '109', desc: 'Colocación de estribo en red primaria (1 unidad)' },
-            { item: '110', desc: 'Colocación de estribo en red primaria (2 unidades)' },
-            { item: '111', desc: 'Colocación de estribo en red primaria (3 unidades)' },
-            { item: '112', desc: 'Conector amovible' },
-            { item: '113', desc: 'Colocación de aislador tipo pin- suspensión o line post' },
-            { item: '114', desc: 'Coloc viento poste aux para red 13.2-34.5kV, incluy instal poste aux' },
-            { item: '115', desc: 'Coloc viento Tip Bandera "Fn" red 13.2, incluy instal poste aux' },
-            { item: '116', desc: 'Coloc viento Tip Bandera "Fn" red 13.2, en Configuración Especial' },
-            { item: '117', desc: 'Colocación de viento convencional o farol para red de 13.2kV y 34.5 kV' },
-            { item: '118', desc: 'Colocación de viento convencional o farol para red secundaria' },
-            { item: '119', desc: 'Retempla de viento' },
-            { item: '120', desc: 'Colocación de aisladero en línea monofásica- 7,6kV' },
-            { item: '121', desc: 'Colocación juego de aisladero en línea bifásica- 13,2 kV' },
-            { item: '122', desc: 'Colocación juego de aisladero en línea trifásica- 13,2 kV' },
-            { item: '123', desc: 'Tendida de línea primaria aérea 1F cubierta 1h ACSR #2 AWG, CF63-CF125' },
-            { item: '124', desc: 'Tendida de línea primaria aérea 2F cubierta 2h ACSR #2 AWG, CF63-CF125' },
-            { item: '125', desc: 'Tendida de línea primaria aérea 3F cubierta 3h ACSR #2 AWG, CF63-CF125' },
-            { item: '126', desc: 'Tendida de línea primaria aérea 1F-desnuda-1 hilo ACSR#2 ,1/0 o 4/0AWG' },
-            { item: '127', desc: 'Tendida de línea primaria aérea 2F-desnuda-2 hilo ACSR#2 ,1/0 o 4/0AWG' },
-            { item: '128', desc: 'Tendida de línea primaria aérea 3F-desnuda-3 hilo ACSR#2 ,1/0 o 4/0AWG' },
-            { item: '129', desc: 'Retempla de línea primaria 1 hilo (red existente)' },
-            { item: '130', desc: 'Retempla de línea primaria 2 hilos (red existente)' },
-            { item: '131', desc: 'Retempla de línea primaria 3 hilos (red existente)' },
-            { item: '132', desc: 'Cruce aéreo puente entre redes aéreas MT' },
-            { item: '133', desc: 'Tendido cable mensaje(acero galva) acometida en red chilena o especial' },
-            { item: '134', desc: 'Tendido de trenza en configuración especial (cuarto hilo)' },
-            { item: '135', desc: 'Tendido de trenza normal' },
-            { item: '136', desc: 'Vestidas en baja configuración especial Alineación' },
-            { item: '137', desc: 'Vestidas en baja configuración especial Ángulo' },
-            { item: '138', desc: 'Vestidas en baja configuración especial Fin de línea' },
-            { item: '139', desc: 'Vestidas en baja configuración especial Referencia' },
-            { item: '140', desc: 'Vestidas en baja configuración Red Chilena Alineación' },
-            { item: '141', desc: 'Vestidas en baja configuración Red Chilena Ángulo' },
-            { item: '142', desc: 'Vestidas en baja configuración Red Chilena Fin de línea' },
-            { item: '143', desc: 'Vestidas en baja configuración Red Chilena Referencia' },
-            { item: '144', desc: 'Vestidas en baja configuración trenza normal Alineación' },
-            { item: '145', desc: 'Vestidas en baja configuración trenza normal Ángulo' },
-            { item: '146', desc: 'Vestidas en baja configuración trenza normal Fin de línea' },
-            { item: '147', desc: 'Vestidas en baja configuración trenza normal Referencia' },
-            { item: '148', desc: 'Marcación de circuitos y/o elementos asociados al sistema distribución' },
-            { item: '149', desc: 'Empalme con conector de perforación' },
-            { item: '150', desc: 'Cruce aéreo puente entre redes aéreas de baja tensión' },
-            { item: '151', desc: 'Retempla de línea secundaria (red existente)' },
-            { item: '152', desc: 'Conexión y empalme de usuarios subnormales en actividades de Blindaje' },
-            { item: '153', desc: 'Excavación en vía' },
-            { item: '154', desc: 'Excavación en zona verde' },
-            { item: '155', desc: 'Reparación de andén' },
-            { item: '156', desc: 'Traslado de 1 hilo de línea primaria' },
-            { item: '157', desc: 'Traslado de acometida teléfonos y cableoperador' },
-            { item: '158', desc: 'Traslado de adecuación monohilo o dos hilos en poste' },
-            { item: '159', desc: 'Traslado de adecuación trifásica en poste, para cualquier calibre' },
-            { item: '160', desc: 'Traslado de adecuación punto de operador de comunicación' },
-            { item: '161', desc: 'Traslado de adecuación salida de circuito 13.2kV, cualquier calibre' },
-            { item: '162', desc: 'Traslado de adecuación secundaria en poste' },
-            { item: '163', desc: 'Traslado de caja portabornera' },
-            { item: '164', desc: 'Traslado de bajante primario' },
-            { item: '165', desc: 'Traslado de caja primaria o pararrayos para 13.2kV o 34.5kV' },
-            { item: '166', desc: 'Traslado de línea secundaria aérea en trenza' },
-            { item: '167', desc: 'Traslado de luminaria' },
-            { item: '168', desc: 'Traslado trafo distribución 1F o 2F con accesorios capacidades 3-75kVA' },
-            { item: '169', desc: 'Traslado de trafo distribución 3F-Switces-reguladores o reconectadores' },
-            { item: '170', desc: 'Retiro de 1 hilo línea primaria' },
-            { item: '171', desc: 'Retiro de adecuación monohilo o dos hilos red primaria en poste' },
-            { item: '172', desc: 'Retiro de adecuación secundaria en poste' },
-            { item: '173', desc: 'Retiro de adecuación trifásica red primaria en poste' },
-            { item: '174', desc: 'Retiro de aislador tipo pin- suspensión o line post' },
-            { item: '175', desc: 'Retiro de caja hermética en cruceta' },
-            { item: '176', desc: 'Retiro de caja primaria o pararrayos' },
-            { item: '177', desc: 'Retiro de cruceta y tiranta o diagonal' },
-            { item: '178', desc: 'Retiro de línea secundaria abierta (por conductor)' },
-            { item: '179', desc: 'Retiro de línea secundaria aérea en cable de potencia ' },
-            { item: '180', desc: 'Retiro de portabornera' },
-            { item: '181', desc: 'Retiro de poste de concreto 12 o 14m (todas las referencias)' },
-            { item: '182', desc: 'Retiro de poste de concreto 8, 9 o 10m (todas las referencias)' },
-            { item: '183', desc: 'Retiro de poste de fibra 12 o 14m (todas las referencias)' },
-            { item: '184', desc: 'Retiro de poste de fibra 8, 9 o 10m (todas las referencias)' },
-            { item: '185', desc: 'Retiro de poste de madera' },
-            { item: '186', desc: 'Retiro de trafo de distribución 1F, 2F y accesorios' },
-            { item: '187', desc: 'Retiro de trafo trifásico/suiches/reguladores o reconectadores' },
-            { item: '188', desc: 'Retiro de viento' },
-            { item: '189', desc: 'Conex. y leg. inst. const. por part. portabornera o vano de la red' },
-            { item: '190', desc: 'Conexión y legalización de instala construida particular caja hermétic' },
-            { item: '191', desc: 'Declaración cumplimient RETIE instalaciones intern ejecutadas terceros' },
-            { item: '192', desc: 'Repl de acciones de HV de servicios nuevos o revisión y sellado' },
-            { item: '193', desc: 'Actividad de instalación de red interna (HV)' },
-            { item: '194', desc: 'Instalación"pase"alambre Cu2x8+1x10AWG,THW ó 1x8+1x8CuTHW Empotrado' },
-            { item: '195', desc: 'Instalación"pase"alambre Cu 2x8+1x10 AWG,THW ó 1x8+1x8 Cu THW Expuesto' },
-            { item: '196', desc: 'Instalación y suministro de puesta a tierra (Habilitación vivienda)' },
-            { item: '197', desc: 'Instalación y suministro de tablero de distribución 4 ctos empotrado.' },
-            { item: '198', desc: 'Instalación de tablero de distribución 4 circuitos expuesto.' },
-            { item: '199', desc: 'Instalación de 1 break 30A,120V,3KA, 1polo tablero distribución 4ctos ' },
-            { item: '200', desc: 'Instalación y suministro de breaker 30A 120V 3KA, 1 polo en tablero' },
-            { item: '201', desc: 'Instalación expuesta caja plástica 2*4, incluy element sujeción' },
-            { item: '202', desc: 'Instalación expuesta caja plástica octogonal,incluy element sujeción' },
-            { item: '203', desc: 'Instalación expuesta y suministro de cable flexible de CU 3x12 AWG NM.' },
-            { item: '204', desc: 'Instalación expuesta y suministro de cable flexible de CU 3x14 AWG NM.' },
-            { item: '205', desc: 'Instalación expuesta de Interruptor manual,incluyendo element sujeción' },
-            { item: '206', desc: 'Instalación expuesta de portalámparas de loza, incluy element sujeción' },
-            { item: '207', desc: 'Instalación expuesta de tomacorriente doble, incluy elementsujeción' },
-            { item: '208', desc: 'Instalación expuesta tomacorriente GFCI, incluyendo elementos sujeción' },
-            { item: '209', desc: 'Retiro de elementos existentes (cajas, interruptores o tomas)' },
-            { item: '210', desc: 'Actividad de replanteo al sistema de medida' },
-            { item: '211', desc: 'Lect en sitio de med intelig cualquier punto de medic con equipo local' },
-            { item: '212', desc: 'Rev y norm de fallas en la infraestructura de telecomunicaciones AMI' },
-            { item: '213', desc: 'Instalación access point o extensor RF Mesh' },
-            { item: '214', desc: 'Inst de punto red -Backhaul access point RF Mesh/concen. PLC PP/MultiP' },
-            { item: '215', desc: 'Inst de punto red - Backhaul red LTE con alimentación eléctrica y SPT' },
-            { item: '216', desc: 'Inst de concent. PLC en poste/terraza punto aliment. eléctrica y SPT' },
-            { item: '217', desc: 'Inst pto red  Backhaul para accesspoint RF MESH /conc. PLC-red Fbr Opt' },
-            { item: '218', desc: 'Act. verificación, revisión y normalización de instalaciones en frio' },
-            { item: '219', desc: 'Actividades de redes en altura con carro tipo canasta' },
-            { item: '220', desc: 'Act. de verificación, revisión y normalización de inst. en tensión' },
-            { item: '221', desc: 'Act comple coordinación de trabajos en redes aéreas energía eléctrica' },
-            { item: '222', desc: 'Act. compl de apoyo a la construcción de redes aéreas en piso (Aux)' },
-            { item: '223', desc: 'Act complement apoy construcción redes aéreas de energía en piso' },
-            { item: '224', desc: 'Actividades de adecuación de redes energizada con equipo de línea viva' },
-            { item: '225', desc: 'Bodega adicional' },
-            { item: '226', desc: 'Actividades de revisión y normalización (Brigada Elite)' },
-            { item: '227', desc: 'Inspección de instalaciones con DRONE' },
-            { item: '228', desc: 'Gestión social integral para la reducción de pérdidas de energía' },
-            { item: '229', desc: 'Actividades de poda y descope de árboles' },
-            { item: '230', desc: 'Recolección y disposición final de troncos y ramas' },
-            { item: '231', desc: 'Transporte de medidores en paquete de 0 a 200 kg con estino a Bogota' },
-            { item: '232', desc: 'Trans. medidores en paquete de  0 a 200 Kg con destino a Cartagena' },
-            { item: '233', desc: 'Transporte de medidores en paquete de 0 a 200 kg con destino a Cali' },
-            { item: '234', desc: 'Transporte de medidores en paquete de 0 a 200 kg destino a Medellín' },
-            { item: '1810891', desc: 'ABRAZADERA 200MM UNA SALIDA P/TRANSFORMA' },
-            { item: '1810892', desc: 'ABRAZADERA 250MM UNA SALIDA P/TRANSFORMA' },
-            { item: '1464245', desc: 'ABRAZADERA DOBLE DE 180MM DE 2 SALIDAS' },
-            { item: '1464250', desc: 'ABRAZADERA DOBLE DE 200MM DE 2 SALIDAS' },
-            { item: '1464252', desc: 'ABRAZADERA DOBLE DE 220MM DE 2 SALIDAS' },
-            { item: '1810890', desc: 'ABRAZADERA DE 250 MM DE 2 SALIDAS' },
-            { item: '1441249', desc: 'AISLADOR POLIMERICO SUSP 13.2KV' },
-            { item: '1810234', desc: 'AISLADOR COMPOSITE SUSP 13.2KV ANSI-DS28' },
-            { item: '1810569', desc: 'AISLADOR DE POLIETILENO TIPO PIN 55-3' },
-            { item: '1810570', desc: 'AISLADOR DE POLIETILENO TIPO PIN 55-6' },
-            { item: '1437805', desc: 'AISLADOR PORCELANA CARRETE ANSI 53-2' },
-            { item: '1436991', desc: 'AISLADOR PORCELANA POST 13.2KV ANSI 57-1' },
-            { item: '1707561', desc: 'AISLADOR PORCELANA TENSOR 3/8 ANSI 54-2' },
-            { item: '1808488', desc: 'ALAMBRE DE ALUMINIO AISLADO N: 8 AWG 600V' },
-            { item: '1707868', desc: 'ANCLA DE HORMIGON' },
-            { item: '1441264', desc: 'ARANDELA CURVA CUADRADA 2-1/4X2-1/4X3/16' },
-            { item: '1464552', desc: 'ARANDELA DE FE GALV. DE 4 X 4 X 3/4' },
-            { item: '1440944', desc: 'ARANDELA PLANA REDONDA 5/8' },
-            { item: '1458594', desc: 'ARANDELA DE PRESION AC.INOX. 1/2' },
-            { item: '1458595', desc: 'ARANDELA PLANA REDONDA AC.INOX. 1/2' },
-            { item: '1529859', desc: 'BASE CORTACIRCUITO FUSIBLE 27KV 200A' },
-            { item: '1436978', desc: 'CABLE ACSR DESNUDO 1/0 AWG' },
-            { item: '1930054', desc: 'CABLE AAAC DESNUDO 123,3 MCM' },
-            { item: '1722105', desc: 'CABLE FORRADO CF 63 - 13.2KV' },
-            { item: '1458524', desc: 'CABLE TRENZA-TRIPLEX 1/0AAC-1/0AAAC BT' },
-            { item: '1458525', desc: 'CABLE TRENZA-TRIPLEX 4/0AAC-4/0AAAC BT' },
-            { item: '1434435', desc: 'CABLE ACERO GALVANIZADO P/RETENIDA 3/8' },
-            { item: '1808482', desc: 'CABLE DESNUDO COPPER CLAD 7H#8AWG 3/8' },
-            { item: '1916210', desc: 'CABLE AL CONCENTRICO AL 2X4+6 75A 600V' },
-            { item: '1475237', desc: 'CABLE CONTROL 6X12 600V' },
-            { item: '1434470', desc: 'CABLE CU DESNUDO 7 HILOS #2' },
-            { item: '1551558', desc: 'CAJA POLIESTER DERIVACION 9SAL-1F 1000V' },
-            { item: '2000206', desc: 'CAJA PLASTICA MED BICUERPO 4PUESTO 1F-3H' },
-            { item: '2000205', desc: 'CAJA PLASTICA MED BICUERPO 6PUESTO 1F-3H' },
-            { item: '1475157', desc: 'CAJA POLICARBONATO MED ELECT. TIPO 1' },
-            { item: '1459401', desc: 'CAJA POLICARBONATO MEDIDOR TIPO 1 Y 2' },
-            { item: '1464735', desc: 'CAJA POLICARBONATO MED TIPO 3 Y 4' },
-            { item: '1475368', desc: 'CINTA DE 3/4MM ACERO INOXID. ALTA CONTAM' },
-            { item: '1454857', desc: 'CONECTOR AMOVIBLE(P:2-2/0ACSR-D:6-2/0CU)' },
-            { item: '1437603', desc: 'CONECTOR CUÑA PRESION C/ESTRIBO 1/0(123)' },
-            { item: '1699901', desc: 'CONECTOR COMPRESION CU #2-#2' },
-            { item: '1531537', desc: 'CONECTOR COMPRESION PICA PT' },
-            { item: '1808483', desc: 'CONECTOR CUÑA PAT 5/8" P/CABLE(CCS' },
-            { item: '1437596', desc: 'CONECTOR CUÑA (P:1/0-D:1/0)(P:123-D:123)' },
-            { item: '1525792', desc: 'CONECTOR CUÑA (P:4/0-D:1/0)(P:246-D:123)' },
-            { item: '1525791', desc: 'CONECTOR CUÑA (P:4/0-D:4/0)(P:246-D:246)' },
-            { item: '1703753', desc: 'CONECTOR PERFORACION(P:1/0-4/0-D:1/0-4/0' },
-            { item: '1809021', desc: 'CONECTOR TERMINAL PLET. 1/0 2PERF B.LARG' },
-            { item: '1809022', desc: 'CONECTOR TERMINAL PLET. 4/0 2PERF B.LARG' },
-            { item: '1551265', desc: 'CRUCETA METALICA ANGULAR 1400MM' },
-            { item: '1551267', desc: 'CRUCETA METALICA ANGULAR 2400MM' },
-            { item: '1931053', desc: 'CRUCETA METALICA BANDERA 2400MM' },
-            { item: '1464431', desc: 'DIAGONAL ANGULAR 7\' (PIES)' },
-            { item: '1931077', desc: 'FUSIBLE EXPULSIÓN 2A TP D' },
-            { item: '1474072', desc: 'FUSIBLE EXPULSIÓN 3A TP D' },
-            { item: '1474074', desc: 'FUSIBLE EXPULSIÓN 5A TP D' },
-            { item: '1440860', desc: 'GRAPA CONEXIÓN CABLE TIERRA S/TORN 5/8' },
-            { item: '1465349', desc: 'GRAPA PRENSORA 3 TORNILLOS 5/8 ACER GAL' },
-            { item: '1450949', desc: 'GRAPA DE RETENCION RECTA ALUMINIO 1/0AWG' },
-            { item: '1450950', desc: 'GRAPA RETENCION RECTA AL 4/0AWG-266MCM' },
-            { item: '1551418', desc: 'GRILLETE LARGO RECTO 5/8 11 300 KG' },
-            { item: '1458467', desc: 'GUARDACABOS P/RETENCION CABLE ACERO 3/8' },
-            { item: '1465067', desc: 'HEBILLA ACERO INOX. PARA CINTA 3/4MM' },
-            { item: '1932111', desc: 'MED E2DC 240V 10(A) 60HZ A10' },
-            { item: '1464705', desc: 'PERNO DE CARRUAJE DE 5/8 X 3' },
-            { item: '1464856', desc: 'PERNO DE CARRUAJE DE 5/8 X 6' },
-            { item: '1551282', desc: 'PERNO ROSCA CORRIDA AC.GALV. 5/8X12' },
-            { item: '1450114', desc: 'PERNO ROSCA CORRIDA AC.GALV. 5/8X20' },
-            { item: '1458662', desc: 'PLETINA SUJECION PARA RETENIDAS' },
-            { item: '1459733', desc: 'POSTE HPC/HPV 9MX500 DAN(CR)' },
-            { item: '1807941', desc: 'POSTE HPC/HPV 9MX735 DAN(CR)' },
-            { item: '1807940', desc: 'POSTE HPC/HPV 9MX1030 DAN(CR)' },
-            { item: '1475174', desc: 'POSTE HPC/HPV 12MX735 DAN(CR)' },
-            { item: '1465239', desc: 'POSTE HPC/HPV 12MX1030 DAN(CR)' },
-            { item: '1807947', desc: 'POSTE HPC/HPV 12MX1324 DAN(CR)' },
-            { item: '2000070', desc: 'POSTE HPC/HPV 12MX1600 DAN(CR)' },
-            { item: '1931817', desc: 'POSTE FIBRA VIDRIO 9MX500 DAN(CR)' },
-            { item: '2000074', desc: 'POSTE FIBRA VIDRIO 9MX735 DAN(CR)' },
-            { item: '2000295', desc: 'POSTE FIBRA VIDRIO 9MX1030 DAN(CR)' },
-            { item: '1931407', desc: 'POSTE FIBRA VIDRIO 12MX500 DAN(CR)' },
-            { item: '1918420', desc: 'POSTE FIBRA VIDRIO 12MX735 DAN(CR)' },
-            { item: '2000075', desc: 'POSTE FIBRA VIDRIO 12MX1030 DAN(CR)' },
-            { item: '1437713', desc: 'RETENC PREF OMEG DOB 57/1-3 ACSR1/0' },
-            { item: '1458466', desc: 'RETENC PREF TERMINAL CABLE AC-3/8' },
-            { item: '1437707', desc: 'RETENC PREF Z 57/1-3 ACSR.1/0' },
-            { item: '1810564', desc: 'RETENCION PREFORMADA 15KV CF63(123AAAC)' },
-            { item: '1817327', desc: 'SELLO ROTO SEAL AZUL (P/MED. ESPECIAL)' },
-            { item: '1479092', desc: 'SOPORTE EN U RED BT TRENZADA EN CRUCETA' },
-            { item: '1437806', desc: 'SOPORTE HORQUILLA P/AISLADOR TP CARRETE' },
-            { item: '1551556', desc: 'SOPORTE P/SECC FUSIB. EN CRUCETA ANGULAR' },
-            { item: '1931570', desc: 'SPT BT ACERO INOX. AUSTENITICO POSTE 9M' },
-            { item: '1917369', desc: 'SPT MT ACERO INOX AUSTENITICO POSTE 12M' },
-            { item: '2000360', desc: 'TC (BT) NUCLEO PARTIDO 300/5A CLASE 1EXT' },
-            { item: '1458484', desc: 'TORNILLO AC.GALVANIZ.C.T.5/8X3' },
-            { item: '1437647', desc: 'TORNILLO AC.GALVANIZ.C.T.5/8X6' },
-            { item: '1437651', desc: 'TORNILLO AC.GALVANIZ.C/T 5/8X12' },
-            { item: '1437658', desc: 'TORNILLO AC.GALVANIZ.CON OJO.C.T.5/8X12' },
-            { item: '1458593', desc: 'TORNILLO AC.INOXIDABLE/EXAG.C.T.1/2X2' },
-            { item: '2000388', desc: 'TORNILLO TRIANGULAR PARA CAJA' },
-            { item: '1475277', desc: 'TRAFO CONV. 1F 25KVA 13.2KV' },
-            { item: '1446119', desc: 'TRAFO CONV 1F 37.5KVA 13.2KV' },
-            { item: '1475278', desc: 'TRAFO CONV. 1F 50KVA 13.2KV' },
-            { item: '1475279', desc: 'TRAFO CONV. 1F 75KVA 13.2KV' },
-            { item: '1529928', desc: 'TUBO PORTAFUSIBLE EXP. 27KV 100A' },
-            { item: '1811290', desc: 'TUBO ABIERTO SEÑALIZACION Y PROTECCION DE RETENIDAS 25 MM' },
-            { item: '1437661', desc: 'TUERCA DE OJO ACERO GALVANIZADO 5/8' },
-            { item: '1437659', desc: 'TUERCA EXAGONAL ACERO GALV. 5/8' },
-            { item: '1458479', desc: 'VARILLA ANCLAJE DE OJO C.T. 3/4X8' },
-            { item: '1525655', desc: 'VARILLA DE PUESTA A TIERRA 5/8X8' },
-            { item: '1310002', desc: 'CEMENTO GRIS' },
-            { item: '100108', desc: 'CAJAS NANSEN CONCENTRADORAS' },
-            { item: '100110', desc: 'SOPORTE ANGULO .6 MTS' },
-            { item: '100109', desc: 'SOPORTE ANGULO 1,20 MTS' },
-            { item: 'F11415', desc: '2X20 AWG CU DUPLEX SPT-C 300V60C' }
-        ];
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = '';
 
-        let obraActualId = null;
-
-        // EJECUTAR AL CARGAR LA PÁGINA
-        window.onload = function() {
-            renderizarObras();
-        };
-
-        function guardarDatosLocal() {
-            localStorage.setItem('planilla_obras', JSON.stringify(obras));
-            localStorage.setItem('planilla_registros', JSON.stringify(registros));
-            localStorage.setItem('planilla_items_master', JSON.stringify(itemsMaster));
-        }
-
-        function cambiarVista(vistaId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(vistaId).classList.add('active');
-            cerrarFabMenu();
-            cerrarTopDropdownMenu();
-            cerrarTopDropdownMenuPlanilla();
-        }
-
-        function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
-        function cerrarFabMenu() { document.getElementById('fab-menu').classList.remove('show'); }
-
-        function toggleTopDropdownMenu() {
-            const menu = document.getElementById('top-dropdown-menu');
-            const icon = document.getElementById('top-dropdown-icon');
-            menu.classList.toggle('show');
-            icon.classList.toggle('fa-chevron-up');
-            icon.classList.toggle('fa-chevron-down');
-        }
-        function cerrarTopDropdownMenu() {
-            const menu = document.getElementById('top-dropdown-menu');
-            const icon = document.getElementById('top-dropdown-icon');
-            if (menu) menu.classList.remove('show');
-            if (icon) {
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
+            if (state.currentView === 'home') {
+                app.innerHTML = renderHomeView();
+            } else if (state.currentView === 'stations') {
+                app.innerHTML = renderStationsView();
+            } else if (state.currentView === 'materials') {
+                app.innerHTML = renderMaterialsView();
+            } else if (state.currentView === 'consolidated') {
+                app.innerHTML = renderConsolidatedView();
             }
         }
 
-        function toggleTopDropdownMenuPlanilla() {
-            const menu = document.getElementById('top-dropdown-menu-planilla');
-            const icon = document.getElementById('top-dropdown-icon-planilla');
-            menu.classList.toggle('show');
-            icon.classList.toggle('fa-chevron-up');
-            icon.classList.toggle('fa-chevron-down');
+        // 1. Vista de Obras (Home)
+        function renderHomeView() {
+            return `
+                <header class="bg-blue-700 text-white p-4 shadow-md">
+                    <h1 class="text-xl font-bold">Obras Eléctricas</h1>
+                    <p class="text-xs text-blue-200">Seleccione una obra para gestionar</p>
+                </header>
+                <main class="p-4 flex-1 overflow-y-auto space-y-3">
+                    ${state.obras.map(obra => `
+                        <div onclick="selectObra(${obra.id})" class="bg-white p-4 rounded-lg shadow border border-slate-200 cursor-pointer hover:border-blue-500 transition">
+                            <h2 class="font-bold text-blue-900">${obra.nombre}</h2>
+                            <p class="text-xs text-slate-500 mt-1">${obra.estaciones.length} Estación(es) registrada(s)</p>
+                        </div>
+                    `).join('')}
+                    <button onclick="nuevaObra()" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition">+ Nueva Obra</button>
+                </main>
+            `;
         }
-        function cerrarTopDropdownMenuPlanilla() {
-            const menu = document.getElementById('top-dropdown-menu-planilla');
-            const icon = document.getElementById('top-dropdown-icon-planilla');
-            if (menu) menu.classList.remove('show');
-            if (icon) {
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-            }
-        }
 
-        // Cerrar menú superior al hacer clic fuera
-        window.addEventListener('click', function(e) {
-            if (!e.target.closest('.dropdown-container')) {
-                cerrarTopDropdownMenu();
-                cerrarTopDropdownMenuPlanilla();
-            }
-        });
+        // 2. Vista de Estaciones / Apoyos (Con botón de Consolidado Arriba)
+        function renderStationsView() {
+            const obra = state.currentObra;
+            return `
+                <header class="bg-blue-700 text-white p-4 shadow-md flex items-center justify-between">
+                    <div>
+                        <button onclick="goHome()" class="text-xs text-blue-200 hover:underline mb-1 block">&larr; Volver a Obras</button>
+                        <h1 class="text-lg font-bold truncate max-w-[260px]">${obra.nombre}</h1>
+                    </div>
+                </header>
+                <main class="p-4 flex-1 overflow-y-auto space-y-4">
+                    <!-- BOTÓN DE CONSOLIDADO SUPERIOR -->
+                    <button onclick="openConsolidated()" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-semibold shadow hover:bg-emerald-700 transition flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Ver Consolidado de Materiales</span>
+                    </button>
 
-        function volverPrincipal() { cambiarVista('main-view'); renderizarObras(); }
-        function abrirVistaItems() { cambiarVista('items-view'); renderizarItemsMaster(); }
-
-        function renderizarObras(filtro = '') {
-            const contenedor = document.getElementById('lista-obras');
-            contenedor.innerHTML = '';
-            let obrasOrdenadas = [...obras].sort((a, b) => b.ultimaMod - a.ultimaMod);
-            let filtradas = obrasOrdenadas.filter(o => o.proyecto.toLowerCase().includes(filtro.toLowerCase()));
-
-            if (filtradas.length === 0) {
-                contenedor.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">No hay obras encontradas.</p>';
-                return;
-            }
-
-            filtradas.forEach(obra => {
-                const card = document.createElement('div');
-                card.className = 'obra-card';
-                card.innerHTML = `
-                    <div class="obra-info" onclick="abrirPlanilla(${obra.id})">
-                        <i class="fa-regular fa-folder-open" style="font-size: 1.2rem; color: var(--accent-color);"></i>
-                        <div>
-                            <strong>${obra.proyecto}</strong>
-                            <div style="font-size: 0.8rem; color: #666;">${obra.circuito || 'Sin circuito'} - ${obra.ubicacion || 'Sin ubicación'} (${obra.zona})</div>
+                    <div class="border-t border-slate-200 pt-2">
+                        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Estaciones / Apoyos</h2>
+                        <div class="space-y-2">
+                            ${obra.estaciones.map((est, idx) => `
+                                <div onclick="selectStation(${idx})" class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition">
+                                    <div>
+                                        <span class="font-bold text-slate-800">${est.nombre}</span>
+                                        <p class="text-xs text-slate-500">${est.materiales.length} tipo(s) de materiales</p>
+                                    </div>
+                                    <span class="text-blue-600 font-bold">&rsaquo;</span>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-                    <div class="obra-actions">
-                        <button class="btn-edit" onclick="editarObra(${obra.id})"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-export" onclick="exportarExcel(${obra.id})" title="Exportar a Excel (CSV)"><i class="fa-solid fa-file-excel"></i></button>
-                        <button class="btn-delete" onclick="eliminarObra(${obra.id})"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                `;
-                contenedor.appendChild(card);
-            });
-        }
 
-        function filtrarObras() { renderizarObras(document.getElementById('search-obra').value); }
-
-        function abrirModalObra(id = null) {
-            document.getElementById('modal-obra').classList.add('show');
-            if (id) {
-                document.getElementById('modal-obra-title').innerText = 'Editar Obra';
-                let obra = obras.find(o => o.id === id);
-                document.getElementById('obra-id-edit').value = obra.id;
-                document.getElementById('input-proyecto').value = obra.proyecto;
-                document.getElementById('input-circuito').value = obra.circuito || '';
-                document.getElementById('input-ubicacion').value = obra.ubicacion || '';
-                document.getElementById('input-zona').value = obra.zona || 'Urbano';
-            } else {
-                document.getElementById('modal-obra-title').innerText = 'Nueva Obra';
-                document.getElementById('obra-id-edit').value = '';
-                document.getElementById('input-proyecto').value = '';
-                document.getElementById('input-circuito').value = '';
-                document.getElementById('input-ubicacion').value = '';
-                document.getElementById('input-zona').value = 'Urbano';
-            }
-        }
-
-        function cerrarModalObra() { document.getElementById('modal-obra').classList.remove('show'); }
-
-        function guardarObra() {
-            let id = document.getElementById('obra-id-edit').value;
-            let proyecto = document.getElementById('input-proyecto').value.trim();
-            let circuito = document.getElementById('input-circuito').value.trim();
-            let ubicacion = document.getElementById('input-ubicacion').value.trim();
-            let zona = document.getElementById('input-zona').value;
-
-            if (!proyecto) { alert('El campo Proyecto es obligatorio'); return; }
-
-            if (id) {
-                let obra = obras.find(o => o.id == id);
-                obra.proyecto = proyecto;
-                obra.circuito = circuito;
-                obra.ubicacion = ubicacion;
-                obra.zona = zona;
-                obra.ultimaMod = Date.now();
-            } else {
-                let nuevaId = Date.now();
-                obras.push({ id: nuevaId, proyecto, circuito, ubicacion, zona, ultimaMod: Date.now() });
-                registros[nuevaId] = [];
-            }
-            guardarDatosLocal();
-            cerrarModalObra();
-            renderizarObras();
-        }
-
-        function editarObra(id) { abrirModalObra(id); }
-
-        function eliminarObra(id) {
-            if (confirm('¿Desea eliminar esta obra y todos sus registros?')) {
-                obras = obras.filter(o => o.id !== id);
-                delete registros[id];
-                guardarDatosLocal();
-                renderizarObras();
-            }
-        }
-
-        // --- CONSOLIDADO DE MATERIALES ---
-        function abrirConsolidadoMateriales() {
-            let tbody = document.getElementById('tabla-consolidado-body');
-            tbody.innerHTML = '';
-            let lista = registros[obraActualId] || [];
-
-            if (lista.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No hay registros en esta obra para consolidar.</td></tr>`;
-                document.getElementById('modal-consolidado').classList.add('show');
-                return;
-            }
-
-            // Agrupar y sumar cantidades por ítem
-            let consolidadoMap = {};
-            lista.forEach(reg => {
-                let itemKey = reg.item.trim();
-                let cantidad = parseFloat(reg.cantidad) || 0;
-                if (!consolidadoMap[itemKey]) {
-                    consolidadoMap[itemKey] = {
-                        item: itemKey,
-                        descripcion: reg.descripcion || 'Sin descripción',
-                        cantidadTotal: 0
-                    };
-                }
-                consolidadoMap[itemKey].cantidadTotal += cantidad;
-            });
-
-            // Convertir a array y ordenar alfabéticamente por la descripción (o por el código 'item' si prefieres)
-            let arrayConsolidado = Object.values(consolidadoMap).sort((a, b) => {
-                return a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'accent' });
-            });
-
-            // Renderizar filas en el modal
-            arrayConsolidado.forEach(item => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${item.item}</strong></td>
-                    <td>${item.descripcion}</td>
-                    <td><strong>${item.cantidadTotal}</strong></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('modal-consolidado').classList.add('show');
-        }
-        function cerrarConsolidadoMateriales() {
-            document.getElementById('modal-consolidado').classList.remove('show');
-        }
-
-        function exportarConsolidadoCSV() {
-            let lista = registros[obraActualId] || [];
-            if (lista.length === 0) {
-                alert('No hay datos para exportar.');
-                return;
-            }
-
-            let obra = obras.find(o => o.id === obraActualId);
-            let consolidadoMap = {};
-            lista.forEach(reg => {
-                let itemKey = reg.item.trim();
-                let cantidad = parseFloat(reg.cantidad) || 0;
-                if (!consolidadoMap[itemKey]) {
-                    consolidadoMap[itemKey] = {
-                        item: itemKey,
-                        descripcion: reg.descripcion || 'Sin descripción',
-                        cantidadTotal: 0
-                    };
-                }
-                consolidadoMap[itemKey].cantidadTotal += cantidad;
-            });
-
-            let csvContent = "data:text/csv;charset=utf-8,Item,Descripcion,Cantidad Total\n";
-            Object.values(consolidadoMap).forEach(item => {
-                let row = [`"${item.item}"`, `"${item.descripcion}"`, item.cantidadTotal];
-                csvContent += row.join(",") + "\n";
-            });
-
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${obra.proyecto}_consolidado_materiales.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // --- FUNCIONES DE EXPORTAR E IMPORTAR (JSON / OBRAS / TODO) ---
-        function exportarTodoJSON() {
-            const dataBackup = {
-                obras: obras,
-                registros: registros,
-                itemsMaster: itemsMaster
-            };
-            const blob = new Blob([JSON.stringify(dataBackup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `respaldo_completo_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function abrirModalExportarObra() {
-            if (obras.length === 0) {
-                alert('No hay obras registradas para exportar.');
-                return;
-            }
-            let select = document.getElementById('select-obra-exportar');
-            select.innerHTML = '';
-            obras.forEach(o => {
-                select.innerHTML += `<option value="${o.id}">${o.proyecto} (${o.circuito || 'Sin circuito'})</option>`;
-            });
-            document.getElementById('modal-exportar-obra').classList.add('show');
-        }
-
-        function cerrarModalExportarObra() {
-            document.getElementById('modal-exportar-obra').classList.remove('show');
-        }
-
-        function ejecutarExportarObraSeleccionada() {
-            let obraId = parseInt(document.getElementById('select-obra-exportar').value);
-            let obra = obras.find(o => o.id === obraId);
-            if (!obra) return;
-
-            let datosObraUnica = {
-                esObraIndividual: true,
-                obra: obra,
-                registros: registros[obraId] || [],
-                itemsMaster: itemsMaster
-            };
-
-            const blob = new Blob([JSON.stringify(datosObraUnica, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `obra_${obra.proyecto.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            cerrarModalExportarObra();
-        }
-
-        function cargarObraJSON(event) {
-            const archivo = event.target.files[0];
-            if (!archivo) return;
-
-            const lector = new FileReader();
-            lector.onload = function(e) {
-                try {
-                    const contenido = JSON.parse(e.target.result);
-
-                    if (contenido.esObraIndividual && contenido.obra) {
-                        let nuevaObra = contenido.obra;
-                        let nuevoId = Date.now();
-                        nuevaObra.id = nuevoId;
-                        nuevaObra.ultimaMod = Date.now();
-
-                        obras.push(nuevaObra);
-                        registros[nuevoId] = contenido.registros || [];
-
-                        if (contenido.itemsMaster) {
-                            contenido.itemsMaster.forEach(itemM => {
-                                if (!itemsMaster.some(i => i.item === itemM.item)) {
-                                    itemsMaster.push(itemM);
-                                }
-                            });
-                        }
-
-                        guardarDatosLocal();
-                        renderizarObras();
-                        alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito para continuarla!`);
-                    } else if (contenido.obras && contenido.registros) {
-                        if (confirm('Este archivo contiene un respaldo completo. ¿Desea fusionarlo o reemplazar los datos actuales?')) {
-                            obras = contenido.obras;
-                            registros = contenido.registros;
-                            if (contenido.itemsMaster) itemsMaster = contenido.itemsMaster;
-                            guardarDatosLocal();
-                            renderizarObras();
-                            alert('¡Datos restaurados con éxito!');
-                        }
-                    } else {
-                        alert('El formato del archivo JSON no es válido.');
-                    }
-                } catch (error) {
-                    alert('Error al leer el archivo JSON.');
-                }
-                event.target.value = '';
-            };
-            lector.readAsText(archivo);
-        }
-
-        function abrirPlanilla(id) {
-            obraActualId = id;
-            let obra = obras.find(o => o.id === id);
-            obra.ultimaMod = Date.now();
-            guardarDatosLocal();
-
-            document.getElementById('titulo-planilla').innerText = obra.proyecto;
-            document.getElementById('info-general-obra').innerHTML = `
-                <p><strong>Proyecto:</strong> ${obra.proyecto}</p>
-                <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Ubicación:</strong> ${obra.ubicacion || 'N/A'}</p>
-                <p><strong>Zona:</strong> ${obra.zona}</p>
+                    <button onclick="nuevaEstacion()" class="w-full bg-blue-50 text-blue-700 border border-blue-300 py-2 rounded-lg font-semibold hover:bg-blue-100 transition">+ Añadir Estación / Apoyo</button>
+                </main>
             `;
-            cambiarVista('planilla-view');
-            actualizarSelectEstaciones();
-            renderizarRegistros();
         }
 
-        function actualizarSelectEstaciones() {
-            let select = document.getElementById('filtro-estacion-select');
-            let lista = registros[obraActualId] || [];
-            let estacionesUnicas = [...new Set(lista.map(r => r.estacion))];
-            
-            select.innerHTML = '<option value="">Estación</option>';
-            estacionesUnicas.forEach(est => {
-                select.innerHTML += `<option value="${est}">${est}</option>`;
-            });
+        // 3. Vista de Materiales de una Estación específica
+        function renderMaterialsView() {
+            const est = state.currentStation;
+            return `
+                <header class="bg-blue-700 text-white p-4 shadow-md flex items-center justify-between">
+                    <div>
+                        <button onclick="backToStations()" class="text-xs text-blue-200 hover:underline mb-1 block">&larr; Volver a Estaciones</button>
+                        <h1 class="text-lg font-bold">${est.nombre}</h1>
+                    </div>
+                </header>
+                <main class="p-4 flex-1 overflow-y-auto space-y-3 pb-20">
+                    <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Materiales Registrados</h2>
+                    ${est.materiales.length === 0 ? '<p class="text-sm text-slate-400 italic">No hay materiales en esta estación.</p>' : ''}
+                    ${est.materiales.map((mat, idx) => `
+                        <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">${mat.codigo}</span>
+                                <h3 class="font-medium text-slate-800 text-sm mt-1">${mat.desc}</h3>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">Cant: ${mat.cant}</span>
+                        </div>
+                    `).join('')}
+
+                    <!-- Botón flotante para agregar material a la estación -->
+                    <button onclick="nuevoMaterial()" class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </button>
+                </main>
+            `;
         }
 
-        function renderizarRegistros() {
-            let tbody = document.getElementById('tabla-registros-body');
-            tbody.innerHTML = '';
-            let lista = registros[obraActualId] || [];
-
-            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
-            let filtroEstacion = document.getElementById('filtro-estacion-select').value;
-            let filtroFecha = document.getElementById('filtro-fecha-input').value;
-
-            let filtradosConIndex = lista.map((reg, index) => ({ reg, index })).filter(({ reg }) => {
-                let matchItem = (filtroItem === "") || (reg.item.toLowerCase().trim() === filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
-                let matchEstacion = filtroEstacion === "" || reg.estacion === filtroEstacion;
-                let matchFecha = filtroFecha === "" || reg.fecha === filtroFecha;
-                return matchItem && matchEstacion && matchFecha;
-            });
-
-            if (filtradosConIndex.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros cargados.</td></tr>`;
-                return;
-            }
-
-            filtradosConIndex.forEach(({ reg, index }) => {
-                let longitudItem = reg.item.trim().length;
-                let esDe1a3Cifras = longitudItem >= 1 && longitudItem <= 3;
-                let claseVerde = esDe1a3Cifras ? 'highlight-green' : '';
-
-                let tr = document.createElement('tr');
-                tr.className = 'draggable-row';
-                tr.draggable = true;
-                tr.dataset.index = index;
-
-                tr.innerHTML = `
-                    <td>
-                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
-                        ${reg.estacion}
-                    </td>
-                    <td class="${claseVerde}"><strong>${reg.item}</strong></td>
-                    <td>${reg.descripcion}</td>
-                    <td>${reg.cantidad}</td>
-                    <td>${reg.fecha}</td>
-                    <td>${reg.ndescargo || ''}</td>
-                    <td>${reg.serie || ''}</td>
-                    <td>
-                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-
-                tr.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', index);
-                    setTimeout(() => tr.classList.add('dragging'), 0);
-                });
-
-                tr.addEventListener('dragend', () => {
-                    tr.classList.remove('dragging');
-                    document.querySelectorAll('.draggable-row').forEach(row => row.classList.remove('drag-over'));
-                });
-
-                tr.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    tr.classList.add('drag-over');
-                });
-
-                tr.addEventListener('dragleave', () => {
-                    tr.classList.remove('drag-over');
-                });
-
-                tr.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    tr.classList.remove('drag-over');
-                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                    const toIndex = index;
-                    if (fromIndex !== toIndex) {
-                        moverFilaPorIndice(fromIndex, toIndex);
+        // 4. Vista de Consolidado General de la Obra
+        function renderConsolidatedView() {
+            const obra = state.currentObra;
+            // Agrupar materiales de todas las estaciones
+            const mapConsolidado = {};
+            obra.estaciones.forEach(est => {
+                est.materiales.forEach(mat => {
+                    if (!mapConsolidado[mat.codigo]) {
+                        mapConsolidado[mat.codigo] = { desc: mat.desc, cant: 0 };
                     }
+                    mapConsolidado[mat.codigo].cant += Number(mat.cant);
                 });
-
-                tbody.appendChild(tr);
             });
+            const listaConsolidada = Object.keys(mapConsolidado).map(codigo => ({
+                codigo,
+                desc: mapConsolidado[codigo].desc,
+                cant: mapConsolidado[codigo].cant
+            }));
+
+            return `
+                <header class="bg-emerald-700 text-white p-4 shadow-md flex items-center justify-between">
+                    <div>
+                        <button onclick="backToStations()" class="text-xs text-emerald-200 hover:underline mb-1 block">&larr; Volver a Estaciones</button>
+                        <h1 class="text-lg font-bold">Consolidado de Obra</h1>
+                    </div>
+                </header>
+                <main class="p-4 flex-1 overflow-y-auto space-y-3">
+                    <p class="text-xs text-slate-500">Suma total de materiales de todas las estaciones en <b>${obra.nombre}</b>.</p>
+                    ${listaConsolidada.length === 0 ? '<p class="text-sm text-slate-400 italic">No hay registros consolidados.</p>' : ''}
+                    ${listaConsolidada.map(item => `
+                        <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-mono bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">${item.codigo}</span>
+                                <h3 class="font-medium text-slate-800 text-sm mt-1">${item.desc}</h3>
+                            </div>
+                            <span class="bg-emerald-100 text-emerald-800 text-sm font-bold px-3 py-1 rounded-full">Total: ${item.cant}</span>
+                        </div>
+                    `).join('')}
+                </main>
+            `;
         }
 
-        function moverFilaPorIndice(fromIndex, toIndex) {
-            let lista = registros[obraActualId];
-            let elementoMovido = lista.splice(fromIndex, 1)[0];
-            lista.splice(toIndex, 0, elementoMovido);
-            guardarDatosLocal();
-            renderizarRegistros();
+        // Acciones de control y navegación
+        function selectObra(id) {
+            state.currentObra = state.obras.find(o => o.id === id);
+            state.currentView = 'stations';
+            render();
         }
 
-        function limpiarFiltros() {
-            document.getElementById('filtro-item-input').value = '';
-            document.getElementById('filtro-estacion-select').value = '';
-            document.getElementById('filtro-fecha-input').value = '';
-            renderizarRegistros();
+        function goHome() {
+            state.currentObra = null;
+            state.currentStation = null;
+            state.currentView = 'home';
+            render();
         }
 
-        function abrirModalRegistro(id = null) {
-            document.getElementById('modal-registro').classList.add('show');
-            if (id) {
-                document.getElementById('modal-reg-title').innerText = 'Editar Registro';
-                let reg = registros[obraActualId].find(r => r.id === id);
-                document.getElementById('reg-id-edit').value = reg.id;
-                document.getElementById('reg-estacion').value = reg.estacion;
-                document.getElementById('reg-item').value = reg.item;
-                document.getElementById('reg-descripcion').value = reg.descripcion;
-                document.getElementById('reg-cantidad').value = reg.cantidad;
-                document.getElementById('reg-fecha').value = reg.fecha;
-                document.getElementById('reg-ndescargo').value = reg.ndescargo;
-                document.getElementById('reg-serie').value = reg.serie;
-            } else {
-                document.getElementById('modal-reg-title').innerText = 'Nuevo Registro';
-                document.getElementById('reg-id-edit').value = '';
-                document.getElementById('reg-item').value = '';
-                document.getElementById('reg-descripcion').value = '';
-                document.getElementById('reg-cantidad').value = '1';
-                document.getElementById('reg-serie').value = '';
+        function selectStation(idx) {
+            state.currentStation = state.currentObra.estaciones[idx];
+            state.currentView = 'materials';
+            render();
+        }
 
-                let lista = registros[obraActualId] || [];
-                if (lista.length > 0) {
-                    let ultimo = lista[lista.length - 1];
-                    document.getElementById('reg-estacion').value = ultimo.estacion || '';
-                    document.getElementById('reg-fecha').value = ultimo.fecha || new Date().toISOString().split('T')[0];
-                    document.getElementById('reg-ndescargo').value = ultimo.ndescargo || '';
-                } else {
-                    document.getElementById('reg-estacion').value = '';
-                    document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
-                    document.getElementById('reg-ndescargo').value = '';
-                }
+        function backToStations() {
+            state.currentStation = null;
+            state.currentView = 'stations';
+            render();
+        }
 
-                setTimeout(() => {
-                    document.getElementById('reg-item').focus();
-                }, 100);
+        function openConsolidated() {
+            state.currentView = 'consolidated';
+            render();
+        }
+
+        function nuevaObra() {
+            const nombre = prompt("Ingrese el nombre de la nueva obra:");
+            if (nombre) {
+                state.obras.push({ id: Date.now(), nombre, estaciones: [] });
+                render();
             }
         }
 
-        function cerrarModalRegistro() { document.getElementById('modal-registro').classList.remove('show'); }
-
-        function autocompletarDescripcion(valorItem) {
-            let encontrado = itemsMaster.find(i => i.item.toLowerCase() === valorItem.toLowerCase().trim());
-            if (encontrado) {
-                document.getElementById('reg-descripcion').value = encontrado.desc;
+        function nuevaEstacion() {
+            const nombre = prompt("Ingrese el nombre o código de la estación/apoyo (ej: Apoyo 03):");
+            if (nombre) {
+                state.currentObra.estaciones.push({ nombre, materiales: [] });
+                render();
             }
         }
 
-        function guardarRegistro() {
-            let id = document.getElementById('reg-id-edit').value;
-            let estacion = document.getElementById('reg-estacion').value.trim();
-            let item = document.getElementById('reg-item').value.trim();
-            let descripcion = document.getElementById('reg-descripcion').value.trim();
-            let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 1;
-            let fecha = document.getElementById('reg-fecha').value;
-            let ndescargo = document.getElementById('reg-ndescargo').value.trim();
-            let serie = document.getElementById('reg-serie').value.trim();
-
-            if (!estacion || !item || !fecha) {
-                alert('Complete los campos obligatorios: Estación, Ítem y Fecha');
-                return;
-            }
-
-            if (!registros[obraActualId]) registros[obraActualId] = [];
-
-            let filtroItemActual = document.getElementById('filtro-item-input').value;
-            let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
-            let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
-
-            if (id) {
-                let reg = registros[obraActualId].find(r => r.id == id);
-                reg.estacion = estacion;
-                reg.item = item;
-                reg.descripcion = descripcion;
-                reg.cantidad = cantidad;
-                reg.fecha = fecha;
-                reg.ndescargo = ndescargo;
-                reg.serie = serie;
-            } else {
-                registros[obraActualId].push({
-                    id: Date.now(),
-                    estacion,
-                    item,
-                    descripcion,
-                    cantidad,
-                    fecha,
-                    ndescargo,
-                    serie
-                });
-            }
-
-            guardarDatosLocal();
-            cerrarModalRegistro();
-            actualizarSelectEstaciones();
-
-            document.getElementById('filtro-item-input').value = filtroItemActual;
-            document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
-            document.getElementById('filtro-fecha-input').value = filtroFechaActual;
-
-            renderizarRegistros();
-        }
-
-        function editarRegistro(id) { abrirModalRegistro(id); }
-
-        function eliminarRegistro(id) {
-            if (confirm('¿Desea eliminar este registro?')) {
-                let filtroItemActual = document.getElementById('filtro-item-input').value;
-                let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
-                let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
-
-                registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
-                guardarDatosLocal();
-                actualizarSelectEstaciones();
-
-                document.getElementById('filtro-item-input').value = filtroItemActual;
-                document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
-                document.getElementById('filtro-fecha-input').value = filtroFechaActual;
-
-                renderizarRegistros();
-            }
-        }
-        function renderizarItemsMaster(filtro = '') {
-            let tbody = document.getElementById('tabla-items-master');
-            tbody.innerHTML = '';
-            let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No hay ítems en la base maestra.</td></tr>`;
-                return;
-            }
-
-            filtrados.forEach(item => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${item.item}</strong></td>
-                    <td>${item.desc}</td>
-                    <td>
-                        <button onclick="editarItemMaster('${item.item}')" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarItemMaster('${item.item}')" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function filtrarItemsMaster() { renderizarItemsMaster(document.getElementById('search-item-master').value); }
-
-        function abrirModalItemMaster(codigo = null) {
-            document.getElementById('modal-item-master').classList.add('show');
-            if (codigo) {
-                let itemObj = itemsMaster.find(i => i.item === codigo);
-                document.getElementById('item-original-id').value = itemObj.item;
-                document.getElementById('master-item-code').value = itemObj.item;
-                document.getElementById('master-item-desc').value = itemObj.desc;
-            } else {
-                document.getElementById('item-original-id').value = '';
-                document.getElementById('master-item-code').value = '';
-                document.getElementById('master-item-desc').value = '';
+        function nuevoMaterial() {
+            const codigo = prompt("Ingrese el código del material (ej: ELE001):");
+            if (!codigo) return;
+            const desc = prompt("Ingrese la descripción del material:");
+            if (!desc) return;
+            const cant = prompt("Ingrese la cantidad:", "1");
+            if (cant) {
+                state.currentStation.materiales.push({ codigo, desc, cant: Number(cant) });
+                render();
             }
         }
 
-        function cerrarModalItemMaster() { document.getElementById('modal-item-master').classList.remove('show'); }
-
-        function guardarItemMaster() {
-            let originalId = document.getElementById('item-original-id').value;
-            let code = document.getElementById('master-item-code').value.trim();
-            let desc = document.getElementById('master-item-desc').value.trim();
-
-            if (!code || !desc) {
-                alert('El código y la descripción son obligatorios');
-                return;
-            }
-
-            if (originalId) {
-                let idx = itemsMaster.findIndex(i => i.item === originalId);
-                if (idx !== -1) {
-                    itemsMaster[idx] = { item: code, desc: desc };
-                }
-            } else {
-                if (itemsMaster.some(i => i.item === code)) {
-                    alert('El código de ítem ya existe.');
-                    return;
-                }
-                itemsMaster.push({ item: code, desc: desc });
-            }
-
-            guardarDatosLocal();
-            cerrarModalItemMaster();
-            renderizarItemsMaster();
-        }
-
-        function editarItemMaster(codigo) { abrirModalItemMaster(codigo); }
-
-        function eliminarItemMaster(codigo) {
-            if (confirm('¿Desea eliminar este ítem de la base maestra?')) {
-                itemsMaster = itemsMaster.filter(i => i.item !== codigo);
-                guardarDatosLocal();
-                renderizarItemsMaster();
-            }
-        }
-
-        function exportarExcel(obraId) {
-            let obra = obras.find(o => o.id === obraId);
-            let lista = registros[obraId] || [];
-            if (lista.length === 0) {
-                alert('No hay registros para exportar en esta obra.');
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,Estacion,Item,Descripcion,Cantidad,Fecha,N. Descargo,Serie\n";
-            lista.forEach(r => {
-                let row = [r.estacion, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo || ''}"`, `"${r.serie || ''}"`];
-                csvContent += row.join(",") + "\n";
-            });
-
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${obra.proyecto}_planilla.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
-                    .catch(err => console.log('Error al registrar el Service Worker:', err));
-            });
-        }
+        // Inicializar app
+        render();
     </script>
 </body>
 </html>
