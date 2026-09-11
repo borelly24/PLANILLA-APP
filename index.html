@@ -1712,6 +1712,147 @@
                 tbody.appendChild(tr);
             });
         }
+        function abrirModalRegistro(id = null) {
+    document.getElementById('modal-reg-title').innerText = id ? 'Editar Registro' : 'Nuevo Registro';
+    document.getElementById('reg-id-edit').value = id || '';
+    document.getElementById('reg-estacion').value = estacionActual || '';
+    
+    if (id) {
+        let lista = registros[obraActualId] || [];
+        let reg = lista.find(r => r.id === id);
+        if (reg) {
+            document.getElementById('reg-item').value = reg.item || '';
+            document.getElementById('reg-descripcion').value = reg.descripcion || '';
+            document.getElementById('reg-cantidad').value = reg.cantidad || 1;
+            document.getElementById('reg-fecha').value = reg.fecha || new Date().toISOString().split('T')[0];
+            document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
+            document.getElementById('reg-serie').value = reg.serie || '';
+        }
+    } else {
+        document.getElementById('reg-item').value = '';
+        document.getElementById('reg-descripcion').value = '';
+        document.getElementById('reg-cantidad').value = '1';
+        document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
+        document.getElementById('reg-ndescargo').value = '';
+        document.getElementById('reg-serie').value = '';
+    }
+    
+    document.getElementById('modal-registro').classList.add('show');
+    setTimeout(() => document.getElementById('reg-item').focus(), 100);
+}
+
+function cerrarModalRegistro() {
+    document.getElementById('modal-registro').classList.remove('show');
+}
+
+function autocompletarDescripcion(valorItem) {
+    let codigo = valorItem.trim();
+    let encontrado = itemsMaster.find(i => i.item.toLowerCase() === codigo.toLowerCase());
+    if (encontrado) {
+        document.getElementById('reg-descripcion').value = encontrado.desc;
+    }
+}
+
+function guardarRegistro() {
+    let id = document.getElementById('reg-id-edit').value;
+    let item = document.getElementById('reg-item').value.trim();
+    let descripcion = document.getElementById('reg-descripcion').value.trim();
+    let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 0;
+    let fecha = document.getElementById('reg-fecha').value;
+    let ndescargo = document.getElementById('reg-ndescargo').value.trim();
+    let serie = document.getElementById('reg-serie').value.trim();
+
+    if (!item || !cantidad || !fecha) {
+        alert('Los campos Ítem, Cantidad y Fecha son obligatorios.');
+        return;
+    }
+
+    if (!registros[obraActualId]) {
+        registros[obraActualId] = [];
+    }
+
+    if (id) {
+        let reg = registros[obraActualId].find(r => r.id == id);
+        if (reg) {
+            reg.item = item;
+            reg.descripcion = descripcion;
+            reg.cantidad = cantidad;
+            reg.fecha = fecha;
+            reg.ndescargo = ndescargo;
+            reg.serie = serie;
+        }
+    } else {
+        let nuevoReg = {
+            id: Date.now(),
+            estacion: estacionActual,
+            item: item,
+            descripcion: descripcion,
+            cantidad: cantidad,
+            fecha: fecha,
+            ndescargo: ndescargo,
+            serie: serie
+        };
+        registros[obraActualId].push(nuevoReg);
+    }
+
+    guardarDatosLocal();
+    cerrarModalRegistro();
+    renderizarRegistros();
+}
+
+function renderizarRegistros() {
+    let tbody = document.getElementById('tabla-registros-body');
+    tbody.innerHTML = '';
+    let lista = registros[obraActualId] || [];
+
+    let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
+    let filtroEstacion = estacionActual;
+    let filtroFecha = document.getElementById('filtro-fecha-input').value;
+
+    let filtrados = lista.filter(reg => {
+        let matchEstacion = !filtroEstacion || reg.estacion === filtroEstacion;
+        let matchItem = !filtroItem || reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
+        let matchFecha = !filtroFecha || reg.fecha === filtroFecha;
+        return matchEstacion && matchItem && matchFecha;
+    });
+
+    if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros en esta estación.</td></tr>`;
+        return;
+    }
+
+    filtrados.forEach(reg => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${reg.estacion}</td>
+            <td><strong>${reg.item}</strong></td>
+            <td>${reg.descripcion}</td>
+            <td>${reg.cantidad}</td>
+            <td>${reg.fecha}</td>
+            <td>${reg.ndescargo || '-'}</td>
+            <td>${reg.serie || '-'}</td>
+            <td>
+                <button class="btn-edit" onclick="abrirModalRegistro(${reg.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-delete" onclick="eliminarRegistro(${reg.id})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function eliminarRegistro(id) {
+    if (confirm('¿Desea eliminar este registro?')) {
+        registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
+        guardarDatosLocal();
+        renderizarRegistros();
+    }
+}
+
+function limpiarFiltros() {
+    document.getElementById('filtro-item-input').value = '';
+    document.getElementById('filtro-fecha-input').value = '';
+    renderizarRegistros();
+}
     </script>
 </body>
 </html>
