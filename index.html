@@ -1398,6 +1398,9 @@
 
             if (!registros[obraActualId]) registros[obraActualId] = [];
 
+            // GUARDAR EL FILTRO ACTUAL DE ESTACIÓN ANTES DE RENDERIZAR
+            let estacionFiltroActual = document.getElementById('filtro-estacion-select').value;
+
             if (id) {
                 let reg = registros[obraActualId].find(r => r.id == id);
                 reg.estacion = estacion;
@@ -1423,6 +1426,10 @@
             guardarDatosLocal();
             cerrarModalRegistro();
             actualizarSelectEstaciones();
+
+            // RESTAURAR EL FILTRO DE ESTACIÓN SELECCIONADO PARA QUE NO SE DESHAGA
+            document.getElementById('filtro-estacion-select').value = estacionFiltroActual;
+
             renderizarRegistros();
         }
 
