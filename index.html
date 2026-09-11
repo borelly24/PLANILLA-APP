@@ -191,8 +191,17 @@
             justify-content: space-between;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border-left: 5px solid var(--accent-color);
+            cursor: default;
         }
-        .obra-info, .estacion-info { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
+        .estacion-card.dragging {
+            opacity: 0.4;
+            background-color: #e2e8f0 !important;
+        }
+        .estacion-card.drag-over {
+            border-top: 2px dashed var(--accent-color);
+        }
+        .obra-info, .estacion-info { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+        .estacion-clickable { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
         .obra-actions, .estacion-actions { display: flex; gap: 12px; }
         .obra-actions button, .estacion-actions button { background: none; border: none; font-size: 1.1rem; cursor: pointer; }
         .btn-edit { color: #2e7d32; }
@@ -450,19 +459,6 @@
             <h1 id="titulo-planilla">REGISTRO DE OPERACION</h1>
             <div></div>
         </header>
-
-        <!-- BOTÓN Y MENÚ DESPLEGABLE EN VISTA PLANILLA -->
-        <div class="dropdown-container">
-            <button class="btn-top-dropdown" onclick="toggleTopDropdownMenuPlanilla()">
-                <span><i class="fa-solid fa-boxes-stacked" style="color: #2e7d32; margin-right: 6px;"></i> Opciones de Planilla y Materiales</span>
-                <i class="fa-solid fa-chevron-down" id="top-dropdown-icon-planilla"></i>
-            </button>
-            <div class="top-dropdown-menu" id="top-dropdown-menu-planilla">
-                <button onclick="abrirConsolidadoMateriales(); cerrarTopDropdownMenuPlanilla();">
-                    <i class="fa-solid fa-calculator" style="color: #0277bd; width: 20px;"></i> Consolidado de Materiales (Obra Completa)
-                </button>
-            </div>
-        </div>
 
         <div class="general-data" id="info-general-obra"></div>
 
@@ -1069,6 +1065,7 @@
 
         let obraActualId = null;
         let estacionActual = null;
+        let estacionDragging = null;
 
         // EJECUTAR AL CARGAR LA PÁGINA
         window.onload = function() {
@@ -1087,7 +1084,6 @@
             cerrarFabMenu();
             cerrarTopDropdownMenu();
             cerrarTopDropdownMenuEstaciones();
-            cerrarTopDropdownMenuPlanilla();
         }
 
         function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
@@ -1127,29 +1123,11 @@
             }
         }
 
-        function toggleTopDropdownMenuPlanilla() {
-            const menu = document.getElementById('top-dropdown-menu-planilla');
-            const icon = document.getElementById('top-dropdown-icon-planilla');
-            menu.classList.toggle('show');
-            icon.classList.toggle('fa-chevron-up');
-            icon.classList.toggle('fa-chevron-down');
-        }
-        function cerrarTopDropdownMenuPlanilla() {
-            const menu = document.getElementById('top-dropdown-menu-planilla');
-            const icon = document.getElementById('top-dropdown-icon-planilla');
-            if (menu) menu.classList.remove('show');
-            if (icon) {
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-            }
-        }
-
         // Cerrar menú superior al hacer clic fuera
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.dropdown-container')) {
                 cerrarTopDropdownMenu();
                 cerrarTopDropdownMenuEstaciones();
-                cerrarTopDropdownMenuPlanilla();
             }
         });
 
@@ -1172,7 +1150,7 @@
                 const card = document.createElement('div');
                 card.className = 'obra-card';
                 card.innerHTML = `
-                    <div class="obra-info" onclick="abrirEstaciones(${obra.id})">
+                    <div class="obra-info" onclick="abrirEstaciones(${obra.id})" style="cursor: pointer;">
                         <i class="fa-regular fa-folder-open" style="font-size: 1.2rem; color: var(--accent-color);"></i>
                         <div>
                             <strong>${obra.proyecto}</strong>
@@ -1283,15 +1261,61 @@
             filtradas.forEach(est => {
                 let card = document.createElement('div');
                 card.className = 'estacion-card';
+                card.draggable = true;
+                
+                card.ondragstart = (e) => {
+                    estacionDragging = est;
+                    e.dataTransfer.effectAllowed = 'move';
+                    card.classList.add('dragging');
+                };
+                card.ondragend = () => {
+                    card.classList.remove('dragging');
+                    document.querySelectorAll('.estacion-card').forEach(c => c.classList.remove('drag-over'));
+                };
+                card.ondragover = (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                };
+                card.ondragenter = () => card.classList.add('drag-over');
+                card.ondragleave = () => card.classList.remove('drag-over');
+                card.ondrop = (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    if (!estacionDragging || estacionDragging === est) return;
+
+                    let todasEstaciones = [...new Set(lista.map(r => r.estacion))].filter(Boolean);
+                    let fromIdx = todasEstaciones.indexOf(estacionDragging);
+                    let toIdx = todasEstaciones.indexOf(est);
+
+                    if (fromIdx === -1 || toIdx === -1) return;
+
+                    todasEstaciones.splice(fromIdx, 1);
+                    todasEstaciones.splice(toIdx, 0, estacionDragging);
+
+                    let nuevosRegistros = [];
+                    todasEstaciones.forEach(s => {
+                        let recs = lista.filter(r => r.estacion === s);
+                        nuevosRegistros.push(...recs);
+                    });
+                    let restos = lista.filter(r => !todasEstaciones.includes(r.estacion));
+                    nuevosRegistros.push(...restos);
+
+                    registros[obraActualId] = nuevosRegistros;
+                    guardarDatosLocal();
+                    renderizarEstaciones(document.getElementById('search-estacion').value);
+                    estacionDragging = null;
+                };
+
                 card.innerHTML = `
-                    <div class="estacion-info" onclick="abrirPlanillaEstacion('${est}')">
+                    <div class="estacion-clickable" onclick="abrirPlanillaEstacion('${est}')">
+                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
                         <i class="fa-solid fa-location-dot" style="font-size: 1.2rem; color: var(--accent-color);"></i>
                         <div>
                             <strong>${est}</strong>
-                            <div style="font-size: 0.8rem; color: #666;">Haz clic para ver la planilla de esta estación</div>
                         </div>
                     </div>
                     <div class="estacion-actions">
+                        <button class="btn-edit" onclick="editarEstacion('${est}')" title="Editar Estación"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn-delete" onclick="eliminarEstacion('${est}')" title="Eliminar Estación"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
@@ -1321,6 +1345,28 @@
             estacionActual = nuevaEst;
             cerrarModalCrearEstacion();
             abrirPlanillaEstacion(nuevaEst);
+        }
+
+        function editarEstacion(estActual) {
+            let nuevoNombre = prompt("Ingrese el nuevo nombre para la estación:", estActual);
+            if (nuevoNombre === null) return;
+            nuevoNombre = nuevoNombre.trim();
+            if (!nuevoNombre) {
+                alert("El nombre de la estación no puede estar vacío.");
+                return;
+            }
+            let lista = registros[obraActualId] || [];
+            if (lista.some(r => r.estacion === nuevoNombre && r.estacion !== estActual)) {
+                alert("Ya existe una estación con ese nombre en esta obra.");
+                return;
+            }
+            lista.forEach(r => {
+                if (r.estacion === estActual) {
+                    r.estacion = nuevoNombre;
+                }
+            });
+            guardarDatosLocal();
+            renderizarEstaciones(document.getElementById('search-estacion').value);
         }
 
         function eliminarEstacion(est) {
@@ -1505,7 +1551,6 @@
 
             let registrosFiltradosPorFecha = [];
             
-            // Recorrer todas las obras y sus registros
             Object.keys(registros).forEach(obraId => {
                 let obraObj = obras.find(o => o.id == obraId);
                 let nombreObra = obraObj ? obraObj.proyecto : 'Desconocida';
@@ -1532,7 +1577,6 @@
                 return;
             }
 
-            // Construir CSV incluyendo la columna adicional "Obra"
             let csvContent = "data:text/csv;charset=utf-8,Obra,Estacion,Item,Descripcion,Cantidad,Fecha,N. Descargo,Serie\n";
             registrosFiltradosPorFecha.forEach(r => {
                 let row = [`"${r.obra}"`, `"${r.estacion}"`, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo}"`, `"${r.serie}"`];
@@ -1615,7 +1659,7 @@
             let lista = registros[obraActualId] || [];
 
             let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
-            let filtroEstacion = estacionActual; // Fijado por la estación seleccionada
+            let filtroEstacion = estacionActual;
             let filtroFecha = document.getElementById('filtro-fecha-input').value;
 
             let filtradosConIndex = lista.map((reg, index) => ({ reg, index })).filter(({ reg }) => {
@@ -1652,282 +1696,11 @@
                     <td>${reg.ndescargo || ''}</td>
                     <td>${reg.serie || ''}</td>
                     <td>
-                        <button onclick="editarRegistro(${reg.id})" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-
-                tr.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', index);
-                    setTimeout(() => tr.classList.add('dragging'), 0);
-                });
-
-                tr.addEventListener('dragend', () => {
-                    tr.classList.remove('dragging');
-                    document.querySelectorAll('.draggable-row').forEach(row => row.classList.remove('drag-over'));
-                });
-
-                tr.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    tr.classList.add('drag-over');
-                });
-
-                tr.addEventListener('dragleave', () => {
-                    tr.classList.remove('drag-over');
-                });
-
-                tr.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    tr.classList.remove('drag-over');
-                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                    const toIndex = index;
-                    if (fromIndex !== toIndex) {
-                        moverFilaPorIndice(fromIndex, toIndex);
-                    }
-                });
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        function moverFilaPorIndice(fromIndex, toIndex) {
-            let lista = registros[obraActualId];
-            let elementoMovido = lista.splice(fromIndex, 1)[0];
-            lista.splice(toIndex, 0, elementoMovido);
-            guardarDatosLocal();
-            renderizarRegistros();
-        }
-
-        function limpiarFiltros() {
-            document.getElementById('filtro-item-input').value = '';
-            document.getElementById('filtro-fecha-input').value = '';
-            renderizarRegistros();
-        }
-
-        function abrirModalRegistro(id = null) {
-            document.getElementById('modal-registro').classList.add('show');
-            if (id) {
-                document.getElementById('modal-reg-title').innerText = 'Editar Registro';
-                let reg = registros[obraActualId].find(r => r.id === id);
-                document.getElementById('reg-id-edit').value = reg.id;
-                document.getElementById('reg-estacion').value = reg.estacion;
-                document.getElementById('reg-item').value = reg.item;
-                document.getElementById('reg-descripcion').value = reg.descripcion;
-                document.getElementById('reg-cantidad').value = reg.cantidad;
-                document.getElementById('reg-fecha').value = reg.fecha;
-                document.getElementById('reg-ndescargo').value = reg.ndescargo;
-                document.getElementById('reg-serie').value = reg.serie;
-            } else {
-                document.getElementById('modal-reg-title').innerText = 'Nuevo Registro';
-                document.getElementById('reg-id-edit').value = '';
-                document.getElementById('reg-item').value = '';
-                document.getElementById('reg-descripcion').value = '';
-                document.getElementById('reg-cantidad').value = '1';
-                document.getElementById('reg-serie').value = '';
-                document.getElementById('reg-estacion').value = estacionActual; // Asignación automática y fija de la estación actual
-
-                let lista = registros[obraActualId] || [];
-                if (lista.length > 0) {
-                    let ultimo = lista[lista.length - 1];
-                    document.getElementById('reg-fecha').value = ultimo.fecha || new Date().toISOString().split('T')[0];
-                    document.getElementById('reg-ndescargo').value = ultimo.ndescargo || '';
-                } else {
-                    document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
-                    document.getElementById('reg-ndescargo').value = '';
-                }
-
-                setTimeout(() => {
-                    document.getElementById('reg-item').focus();
-                }, 100);
-            }
-        }
-
-        function cerrarModalRegistro() { document.getElementById('modal-registro').classList.remove('show'); }
-
-        function autocompletarDescripcion(valorItem) {
-            let encontrado = itemsMaster.find(i => i.item.toLowerCase() === valorItem.toLowerCase().trim());
-            if (encontrado) {
-                document.getElementById('reg-descripcion').value = encontrado.desc;
-            }
-        }
-
-        function guardarRegistro() {
-            let id = document.getElementById('reg-id-edit').value;
-            let estacion = estacionActual; // Siempre se usa la estación actual bloqueada
-            let item = document.getElementById('reg-item').value.trim();
-            let descripcion = document.getElementById('reg-descripcion').value.trim();
-            let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 1;
-            let fecha = document.getElementById('reg-fecha').value;
-            let ndescargo = document.getElementById('reg-ndescargo').value.trim();
-            let serie = document.getElementById('reg-serie').value.trim();
-
-            if (!estacion || !item || !fecha) {
-                alert('Complete los campos obligatorios: Estación, Ítem y Fecha');
-                return;
-            }
-
-            if (!registros[obraActualId]) registros[obraActualId] = [];
-
-            let filtroItemActual = document.getElementById('filtro-item-input').value;
-            let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
-
-            if (id) {
-                let reg = registros[obraActualId].find(r => r.id == id);
-                reg.estacion = estacion;
-                reg.item = item;
-                reg.descripcion = descripcion;
-                reg.cantidad = cantidad;
-                reg.fecha = fecha;
-                reg.ndescargo = ndescargo;
-                reg.serie = serie;
-            } else {
-                registros[obraActualId].push({
-                    id: Date.now(),
-                    estacion,
-                    item,
-                    descripcion,
-                    cantidad,
-                    fecha,
-                    ndescargo,
-                    serie
-                });
-            }
-
-            guardarDatosLocal();
-            cerrarModalRegistro();
-            actualizarSelectEstaciones();
-
-            document.getElementById('filtro-item-input').value = filtroItemActual;
-            document.getElementById('filtro-fecha-input').value = filtroFechaActual;
-
-            renderizarRegistros();
-        }
-
-        function editarRegistro(id) { abrirModalRegistro(id); }
-
-        function eliminarRegistro(id) {
-            if (confirm('¿Desea eliminar este registro?')) {
-                let filtroItemActual = document.getElementById('filtro-item-input').value;
-                let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
-
-                registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
-                guardarDatosLocal();
-                actualizarSelectEstaciones();
-
-                document.getElementById('filtro-item-input').value = filtroItemActual;
-                document.getElementById('filtro-fecha-input').value = filtroFechaActual;
-
-                renderizarRegistros();
-            }
-        }
-        function renderizarItemsMaster(filtro = '') {
-            let tbody = document.getElementById('tabla-items-master');
-            tbody.innerHTML = '';
-            let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No hay ítems en la base maestra.</td></tr>`;
-                return;
-            }
-
-            filtrados.forEach(item => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${item.item}</strong></td>
-                    <td>${item.desc}</td>
-                    <td>
-                        <button onclick="editarItemMaster('${item.item}')" style="background:none; border:none; color:#2e7d32; cursor:pointer; margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarItemMaster('${item.item}')" style="background:none; border:none; color:#c62828; cursor:pointer;" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                        <button class="btn-edit" onclick="editarRegistro(${index})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-delete" onclick="eliminarRegistro(${index})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
-            });
-        }
-
-        function filtrarItemsMaster() { renderizarItemsMaster(document.getElementById('search-item-master').value); }
-
-        function abrirModalItemMaster(codigo = null) {
-            document.getElementById('modal-item-master').classList.add('show');
-            if (codigo) {
-                let itemObj = itemsMaster.find(i => i.item === codigo);
-                document.getElementById('item-original-id').value = itemObj.item;
-                document.getElementById('master-item-code').value = itemObj.item;
-                document.getElementById('master-item-desc').value = itemObj.desc;
-            } else {
-                document.getElementById('item-original-id').value = '';
-                document.getElementById('master-item-code').value = '';
-                document.getElementById('master-item-desc').value = '';
-            }
-        }
-
-        function cerrarModalItemMaster() { document.getElementById('modal-item-master').classList.remove('show'); }
-
-        function guardarItemMaster() {
-            let originalId = document.getElementById('item-original-id').value;
-            let code = document.getElementById('master-item-code').value.trim();
-            let desc = document.getElementById('master-item-desc').value.trim();
-
-            if (!code || !desc) {
-                alert('El código y la descripción son obligatorios');
-                return;
-            }
-
-            if (originalId) {
-                let idx = itemsMaster.findIndex(i => i.item === originalId);
-                if (idx !== -1) {
-                    itemsMaster[idx] = { item: code, desc: desc };
-                }
-            } else {
-                if (itemsMaster.some(i => i.item === code)) {
-                    alert('El código de ítem ya existe.');
-                    return;
-                }
-                itemsMaster.push({ item: code, desc: desc });
-            }
-
-            guardarDatosLocal();
-            cerrarModalItemMaster();
-            renderizarItemsMaster();
-        }
-
-        function editarItemMaster(codigo) { abrirModalItemMaster(codigo); }
-
-        function eliminarItemMaster(codigo) {
-            if (confirm('¿Desea eliminar este ítem de la base maestra?')) {
-                itemsMaster = itemsMaster.filter(i => i.item !== codigo);
-                guardarDatosLocal();
-                renderizarItemsMaster();
-            }
-        }
-
-        function exportarExcel(obraId) {
-            let obra = obras.find(o => o.id === obraId);
-            let lista = registros[obraId] || [];
-            if (lista.length === 0) {
-                alert('No hay registros para exportar en esta obra.');
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,Estacion,Item,Descripcion,Cantidad,Fecha,N. Descargo,Serie\n";
-            lista.forEach(r => {
-                let row = [r.estacion, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo || ''}"`, `"${r.serie || ''}"`];
-                csvContent += row.join(",") + "\n";
-            });
-
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${obra.proyecto}_planilla.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
-                    .catch(err => console.log('Error al registrar el Service Worker:', err));
             });
         }
     </script>
