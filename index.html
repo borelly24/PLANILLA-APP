@@ -413,6 +413,19 @@
             <div></div>
         </header>
 
+        <!-- BOTÓN Y MENÚ DESPLEGABLE EN VISTA PLANILLA -->
+        <div class="dropdown-container">
+            <button class="btn-top-dropdown" onclick="toggleTopDropdownMenuPlanilla()">
+                <span><i class="fa-solid fa-boxes-stacked" style="color: #2e7d32; margin-right: 6px;"></i> Opciones de Planilla y Materiales</span>
+                <i class="fa-solid fa-chevron-down" id="top-dropdown-icon-planilla"></i>
+            </button>
+            <div class="top-dropdown-menu" id="top-dropdown-menu-planilla">
+                <button onclick="abrirConsolidadoMateriales(); cerrarTopDropdownMenuPlanilla();">
+                    <i class="fa-solid fa-calculator" style="color: #0277bd; width: 20px;"></i> Consolidado de Materiales
+                </button>
+            </div>
+        </div>
+
         <div class="general-data" id="info-general-obra"></div>
 
         <!-- SECCIÓN DE FILTROS DE CAMPO -->
@@ -490,6 +503,30 @@
 
         <div class="fab-container">
             <button class="fab" onclick="abrirModalItemMaster()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+    </div>
+
+    <!-- MODAL: CONSOLIDADO DE MATERIALES -->
+    <div class="modal" id="modal-consolidado">
+        <div class="modal-content" style="max-width: 550px;">
+            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-calculator"></i> Consolidado de Materiales</h3>
+            <div class="table-container" style="max-height: 350px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ítem</th>
+                            <th>Descripción</th>
+                            <th>Cant. Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-consolidado-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-save" onclick="exportarConsolidadoCSV()"><i class="fa-solid fa-file-excel"></i> Exportar Consolidado CSV</button>
+                <button class="btn btn-cancel" onclick="cerrarConsolidadoMateriales()">Cerrar</button>
+            </div>
         </div>
     </div>
 
@@ -980,6 +1017,7 @@
             document.getElementById(vistaId).classList.add('active');
             cerrarFabMenu();
             cerrarTopDropdownMenu();
+            cerrarTopDropdownMenuPlanilla();
         }
 
         function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
@@ -1002,10 +1040,28 @@
             }
         }
 
+        function toggleTopDropdownMenuPlanilla() {
+            const menu = document.getElementById('top-dropdown-menu-planilla');
+            const icon = document.getElementById('top-dropdown-icon-planilla');
+            menu.classList.toggle('show');
+            icon.classList.toggle('fa-chevron-up');
+            icon.classList.toggle('fa-chevron-down');
+        }
+        function cerrarTopDropdownMenuPlanilla() {
+            const menu = document.getElementById('top-dropdown-menu-planilla');
+            const icon = document.getElementById('top-dropdown-icon-planilla');
+            if (menu) menu.classList.remove('show');
+            if (icon) {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
         // Cerrar menú superior al hacer clic fuera
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.dropdown-container')) {
                 cerrarTopDropdownMenu();
+                cerrarTopDropdownMenuPlanilla();
             }
         });
 
@@ -1105,6 +1161,88 @@
             }
         }
 
+        // --- CONSOLIDADO DE MATERIALES ---
+        function abrirConsolidadoMateriales() {
+            let tbody = document.getElementById('tabla-consolidado-body');
+            tbody.innerHTML = '';
+            let lista = registros[obraActualId] || [];
+
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No hay registros en esta obra para consolidar.</td></tr>`;
+                document.getElementById('modal-consolidado').classList.add('show');
+                return;
+            }
+
+            // Agrupar y sumar cantidades por ítem
+            let consolidadoMap = {};
+            lista.forEach(reg => {
+                let itemKey = reg.item.trim();
+                let cantidad = parseFloat(reg.cantidad) || 0;
+                if (!consolidadoMap[itemKey]) {
+                    consolidadoMap[itemKey] = {
+                        item: itemKey,
+                        descripcion: reg.descripcion || 'Sin descripción',
+                        cantidadTotal: 0
+                    };
+                }
+                consolidadoMap[itemKey].cantidadTotal += cantidad;
+            });
+
+            // Renderizar filas en el modal
+            Object.values(consolidadoMap).forEach(item => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.item}</strong></td>
+                    <td>${item.descripcion}</td>
+                    <td><strong>${item.cantidadTotal}</strong></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('modal-consolidado').classList.add('show');
+        }
+
+        function cerrarConsolidadoMateriales() {
+            document.getElementById('modal-consolidado').classList.remove('show');
+        }
+
+        function exportarConsolidadoCSV() {
+            let lista = registros[obraActualId] || [];
+            if (lista.length === 0) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+
+            let obra = obras.find(o => o.id === obraActualId);
+            let consolidadoMap = {};
+            lista.forEach(reg => {
+                let itemKey = reg.item.trim();
+                let cantidad = parseFloat(reg.cantidad) || 0;
+                if (!consolidadoMap[itemKey]) {
+                    consolidadoMap[itemKey] = {
+                        item: itemKey,
+                        descripcion: reg.descripcion || 'Sin descripción',
+                        cantidadTotal: 0
+                    };
+                }
+                consolidadoMap[itemKey].cantidadTotal += cantidad;
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8,Item,Descripcion,Cantidad Total\n";
+            Object.values(consolidadoMap).forEach(item => {
+                let row = [`"${item.item}"`, `"${item.descripcion}"`, item.cantidadTotal];
+                csvContent += row.join(",") + "\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${obra.proyecto}_consolidado_materiales.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         // --- FUNCIONES DE EXPORTAR E IMPORTAR (JSON / OBRAS / TODO) ---
         function exportarTodoJSON() {
             const dataBackup = {
@@ -1169,7 +1307,6 @@
                 try {
                     const contenido = JSON.parse(e.target.result);
 
-                    // Validar si es una obra individual o un respaldo completo
                     if (contenido.esObraIndividual && contenido.obra) {
                         let nuevaObra = contenido.obra;
                         let nuevoId = Date.now();
@@ -1367,7 +1504,6 @@
                     document.getElementById('reg-ndescargo').value = '';
                 }
 
-                // Posicionar automáticamente el cursor en la casilla de ítem para un nuevo registro
                 setTimeout(() => {
                     document.getElementById('reg-item').focus();
                 }, 100);
@@ -1400,7 +1536,6 @@
 
             if (!registros[obraActualId]) registros[obraActualId] = [];
 
-            // RESPALDAR TODOS LOS FILTROS ACTUALES
             let filtroItemActual = document.getElementById('filtro-item-input').value;
             let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
             let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
@@ -1431,7 +1566,6 @@
             cerrarModalRegistro();
             actualizarSelectEstaciones();
 
-            // RESTAURAR LOS FILTROS
             document.getElementById('filtro-item-input').value = filtroItemActual;
             document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
             document.getElementById('filtro-fecha-input').value = filtroFechaActual;
@@ -1443,7 +1577,6 @@
 
         function eliminarRegistro(id) {
             if (confirm('¿Desea eliminar este registro?')) {
-                // RESPALDAR LOS FILTROS ACTUALES ANTES DE BORRAR
                 let filtroItemActual = document.getElementById('filtro-item-input').value;
                 let filtroEstacionActual = document.getElementById('filtro-estacion-select').value;
                 let filtroFechaActual = document.getElementById('filtro-fecha-input').value;
@@ -1452,7 +1585,6 @@
                 guardarDatosLocal();
                 actualizarSelectEstaciones();
 
-                // RESTAURAR LOS FILTROS
                 document.getElementById('filtro-item-input').value = filtroItemActual;
                 document.getElementById('filtro-estacion-select').value = filtroEstacionActual;
                 document.getElementById('filtro-fecha-input').value = filtroFechaActual;
@@ -1563,7 +1695,6 @@
             document.body.removeChild(link);
         }
 
-        // Registrar Service Worker para permitir instalación PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
