@@ -1,10 +1,9 @@
 const CACHE_NAME = 'planilla-app-v1';
 const urlsToCache = [
   './',
-  './index.html',     // Reemplaza 'index.html' por el nombre exacto de tu archivo principal si es diferente
+  './index.html',     // Recuerda cambiar 'index.html' por el nombre exacto de tu archivo principal si es distinto
   './manifest.json',
-  // Si tienes archivos CSS o JS locales separados, agrégalos aquí. Ejemplo:
-  // './estilos.css'
+  './css/all.min.css'
 ];
 
 // Instalación del Service Worker y almacenamiento en caché de los archivos vitales
