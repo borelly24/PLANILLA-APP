@@ -1,18 +1,18 @@
-self.addEventListener('install', (e) => {
-    e.waitUntil(
-        caches.open('planilla-app-v1').then((cache) => {
-            return cache.addAll([
-                './index.html',
-                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
-            ]);
-        })
-    );
+const CACHE_NAME = 'planilla-app-v1';
+const urlsToCache = [
+  './',
+  './index.html', // O el nombre de tu archivo principal
+  './manifest.json'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
 });
 
-self.addEventListener('fetch', (e) => {
-    e.respondWith(
-        caches.match(e.request).then((response) => {
-            return response || fetch(e.request);
-        })
-    );
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => response || fetch(event.request))
+  );
 });
