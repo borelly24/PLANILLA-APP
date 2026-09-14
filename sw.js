@@ -1,9 +1,17 @@
-const CACHE_NAME = 'planilla-app-v1';
+const CACHE_NAME = 'planilla-app-v2'; // Incrementamos versión para forzar actualización
+
 const urlsToCache = [
   './',
-  './index.html',     // Recuerda cambiar 'index.html' por el nombre exacto de tu archivo principal si es distinto
+  './index.html',
   './manifest.json',
-  './css/all.min.css'
+  './css/all.min.css',
+  // Archivos de fuentes de FontAwesome para asegurar disponibilidad offline
+  './webfonts/fa-solid-900.woff2',
+  './webfonts/fa-solid-900.ttf',
+  './webfonts/fa-regular-400.woff2',
+  './webfonts/fa-regular-400.ttf',
+  './webfonts/fa-brands-400.woff2',
+  './webfonts/fa-brands-400.ttf'
 ];
 
 // Instalación del Service Worker y almacenamiento en caché de los archivos vitales
@@ -11,7 +19,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Archivos en caché guardados con éxito');
+        console.log('Archivos base en caché guardados con éxito');
         return cache.addAll(urlsToCache);
       })
       .catch(err => console.error('Error al guardar en caché los archivos:', err))
@@ -19,7 +27,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activación y limpieza de cachés antiguas si actualizas la versión
+// Activación y limpieza de cachés antiguas
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -36,16 +44,33 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Interceptación de solicitudes para servir el contenido offline
+// Interceptación de solicitudes (Estrategia: Buscar en caché, si no está ir a red y guardarlo dinámicamente)
 self.addEventListener('fetch', event => {
+  // Ignorar peticiones que no sean HTTP/HTTPS (como extensiones del navegador)
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        // Devuelve el archivo desde la caché si existe, sino realiza la petición a la red
-        return response || fetch(event.request);
-      })
-      .catch(() => {
-        // Opcional: Podrías mostrar una página de respaldo si no hay red ni caché
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // Si no está en caché, lo busca en la red y lo clona para guardarlo automáticamente
+        return fetch(event.request).then(networkResponse => {
+          // Verificar si la respuesta es válida
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
+          }
+
+          let responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return networkResponse;
+        }).catch(() => {
+          // Si falla la red y no está en caché, puedes manejar un respaldo si es necesario
+        });
       })
   );
 });
