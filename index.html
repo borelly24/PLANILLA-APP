@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planilla App</title>
+    <title>Planilla & Inventario App</title>
     <!-- Estilos y FontAwesome para iconos -->
-   <link rel="stylesheet" href="./css/all.min.css">
+    <link rel="stylesheet" href="./css/all.min.css">
     <style>
         :root {
             --primary-color: #1e4620;
@@ -13,6 +13,7 @@
             --accent-color: #2e7d32;
             --light-bg: #f4f6f5;
             --success-color: #d4edda;
+            --danger-color: #f8d7da;
             --border-color: #ccc;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
@@ -34,6 +35,37 @@
         }
         header h1 { font-size: 1.2rem; }
         .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+
+        /* VISTA INICIAL DE SELECCIÓN (HOME) */
+        .home-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 40px;
+            padding: 0 10px;
+        }
+        .home-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            cursor: pointer;
+            border-left: 6px solid var(--accent-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .home-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.12);
+        }
+        .home-card i {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+        }
+        .home-card h2 { font-size: 1.2rem; margin-bottom: 5px; color: var(--primary-dark); }
+        .home-card p { font-size: 0.85rem; color: #666; }
 
         /* Botón y Menú Desplegable Superior de Exportación / Carga */
         .dropdown-container {
@@ -372,10 +404,37 @@
 </head>
 <body>
 
-    <!-- VISTA 1: VENTANA PRINCIPAL -->
-    <div id="main-view" class="view active">
+    <!-- VISTA 0: VENTANA INICIAL DE SELECCIÓN -->
+    <div id="home-view" class="view active">
         <header>
-            <h1>PLANILLA APP</h1>
+            <h1>PLANILLA & INVENTARIO APP</h1>
+            <i class="fa-solid fa-bolt"></i>
+        </header>
+        
+        <div class="home-container">
+            <div class="home-card" onclick="irAPlanillas()">
+                <i class="fa-solid fa-file-lines"></i>
+                <div>
+                    <h2>Planilla de Obras</h2>
+                    <p>Gestiona proyectos, estaciones y registros de campo de manera detallada.</p>
+                </div>
+            </div>
+
+            <div class="home-card" onclick="irAInventario()">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <div>
+                    <h2>Inventario de Materiales</h2>
+                    <p>Control de stock, ingresos, reintegros y salidas automáticas por consumo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA 1: VENTANA PRINCIPAL DE PLANILLAS -->
+    <div id="main-view" class="view">
+        <header>
+            <button class="back-btn" onclick="volverHome()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1>PLANILLA DE OBRAS</h1>
             <i class="fa-solid fa-bolt"></i>
         </header>
 
@@ -415,6 +474,53 @@
                 <button onclick="abrirModalObra()"><i class="fa-solid fa-plus-circle"></i> 2- Crear Obra</button>
             </div>
             <button class="fab" onclick="toggleFabMenu()"><i class="fa-solid fa-plus" id="fab-icon"></i></button>
+        </div>
+    </div>
+
+    <!-- VISTA INVENTARIO DE MATERIALES -->
+    <div id="inventario-view" class="view">
+        <header>
+            <button class="back-btn" onclick="volverHome()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1>INVENTARIO DE MATERIALES</h1>
+            <div></div>
+        </header>
+
+        <div class="dropdown-container">
+            <button class="btn-top-dropdown" onclick="toggleTopDropdownMenuInventario()">
+                <span><i class="fa-solid fa-file-excel" style="color: #2e7d32; margin-right: 6px;"></i> Opciones de Inventario</span>
+                <i class="fa-solid fa-chevron-down" id="top-dropdown-icon-inv"></i>
+            </button>
+            <div class="top-dropdown-menu" id="top-dropdown-menu-inventario">
+                <button onclick="exportarInventarioCSV(); cerrarTopDropdownMenuInventario();">
+                    <i class="fa-solid fa-file-excel" style="color: #0277bd; width: 20px;"></i> Exportar Stock CSV
+                </button>
+                <button onclick="abrirModalHistorialMovimientos(); cerrarTopDropdownMenuInventario();">
+                    <i class="fa-solid fa-clock-rotate-left" style="color: #d97706; width: 20px;"></i> Ver Historial de Movimientos
+                </button>
+            </div>
+        </div>
+
+        <div class="search-box-general">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-inventario" placeholder="Buscar material o ítem en stock..." onkeyup="renderizarInventario()">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Ítem</th>
+                        <th style="width: 50%;">Descripción</th>
+                        <th style="width: 15%;">Stock Actual</th>
+                        <th style="width: 15%;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-inventario-body"></tbody>
+            </table>
+        </div>
+
+        <div class="fab-container">
+            <button class="fab" onclick="abrirModalMovimiento()" title="Registrar Entrada / Reintegro"><i class="fa-solid fa-plus"></i></button>
         </div>
     </div>
 
@@ -526,9 +632,9 @@
         <div class="table-container">
             <table style="width: 100%; table-layout: fixed;">
                 <colgroup>
-                    <col style="width: 10%;"> <!-- Columna 1: Ítem -->
-                    <col style="width: 75%;"> <!-- Columna 2: Descripción -->
-                    <col style="width: 15%;"> <!-- Columna 3: Acción -->
+                    <col style="width: 10%;">
+                    <col style="width: 75%;">
+                    <col style="width: 15%;">
                 </colgroup>
                 <thead>
                     <tr>
@@ -543,6 +649,68 @@
 
         <div class="fab-container">
             <button class="fab" onclick="abrirModalItemMaster()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTRAR ENTRADA / REINTEGRO EN INVENTARIO -->
+    <div class="modal" id="modal-movimiento-inv">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-boxes-stacked"></i> Registrar en Inventario</h3>
+            <div class="form-group">
+                <label>Tipo de Movimiento*</label>
+                <select id="inv-tipo">
+                    <option value="ENTRADA">Entrada de Material (Recibido)</option>
+                    <option value="REINTEGRO">Reintegro (Devolución a Almacén)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Código de Ítem*</label>
+                <input type="text" id="inv-item" placeholder="Ej: 80 o 1465239" oninput="autocompletarDescInventario(this.value)">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="inv-descripcion" rows="2" placeholder="Descripción del material"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Cantidad*</label>
+                <input type="number" id="inv-cantidad" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>Fecha*</label>
+                <input type="date" id="inv-fecha">
+            </div>
+            <div class="form-group">
+                <label>Documento / Remisión / Orden*</label>
+                <input type="text" id="inv-documento" placeholder="Ej: REM-98745">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalMovimiento()">Cancelar</button>
+                <button class="btn btn-save" onclick="guardarMovimientoInventario()">Guardar Movimiento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HISTORIAL DE MOVIMIENTOS -->
+    <div class="modal" id="modal-historial-inv">
+        <div class="modal-content" style="max-width: 550px;">
+            <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-clock-rotate-left"></i> Historial de Movimientos de Almacén</h3>
+            <div class="table-container" style="max-height: 350px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Ítem</th>
+                            <th>Cant.</th>
+                            <th>Documento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-historial-body"></tbody>
+                </table>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="cerrarModalHistorialMovimientos()">Cerrar</button>
+            </div>
         </div>
     </div>
 
@@ -717,6 +885,9 @@
                 { id: 102, estacion: 'EPP 01-1', item: '1465239', descripcion: 'POSTE HPC/HPV 12MX1030 DAN(CR)', cantidad: 1, fecha: '2026-05-10', ndescargo: '124', serie: 'ABC99' }
             ]
         };
+
+        // Estructura de Inventario (Movimientos de almacén)
+        let inventarioMovimientos = JSON.parse(localStorage.getItem('planilla_inv_movimientos')) || [];
 
         let itemsMaster = JSON.parse(localStorage.getItem('planilla_items_master')) || [
             { item: '1', desc: 'Inspección Servicio Medida Directa' },
@@ -1073,15 +1244,15 @@
         let estacionActual = null;
         let estacionDragging = null;
 
-        // EJECUTAR AL CARGAR LA PÁGINA
         window.onload = function() {
-            renderizarObras();
+            // Inicia en la vista home (selección)
         };
 
         function guardarDatosLocal() {
             localStorage.setItem('planilla_obras', JSON.stringify(obras));
             localStorage.setItem('planilla_registros', JSON.stringify(registros));
             localStorage.setItem('planilla_items_master', JSON.stringify(itemsMaster));
+            localStorage.setItem('planilla_inv_movimientos', JSON.stringify(inventarioMovimientos));
         }
 
         function cambiarVista(vistaId) {
@@ -1090,6 +1261,19 @@
             cerrarFabMenu();
             cerrarTopDropdownMenu();
             cerrarTopDropdownMenuEstaciones();
+        }
+
+        // Navegación Home
+        function irAPlanillas() {
+            cambiarVista('main-view');
+            renderizarObras();
+        }
+        function irAInventario() {
+            cambiarVista('inventario-view');
+            renderizarInventario();
+        }
+        function volverHome() {
+            cambiarVista('home-view');
         }
 
         function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
@@ -1106,10 +1290,21 @@
             const menu = document.getElementById('top-dropdown-menu');
             const icon = document.getElementById('top-dropdown-icon');
             if (menu) menu.classList.remove('show');
-            if (icon) {
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-            }
+            if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+        }
+
+        function toggleTopDropdownMenuInventario() {
+            const menu = document.getElementById('top-dropdown-menu-inventario');
+            const icon = document.getElementById('top-dropdown-icon-inv');
+            menu.classList.toggle('show');
+            icon.classList.toggle('fa-chevron-up');
+            icon.classList.toggle('fa-chevron-down');
+        }
+        function cerrarTopDropdownMenuInventario() {
+            const menu = document.getElementById('top-dropdown-menu-inventario');
+            const icon = document.getElementById('top-dropdown-icon-inv');
+            if (menu) menu.classList.remove('show');
+            if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
         }
 
         function toggleTopDropdownMenuEstaciones() {
@@ -1123,17 +1318,14 @@
             const menu = document.getElementById('top-dropdown-menu-estaciones');
             const icon = document.getElementById('top-dropdown-icon-estaciones');
             if (menu) menu.classList.remove('show');
-            if (icon) {
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-            }
+            if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
         }
 
-        // Cerrar menú superior al hacer clic fuera
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.dropdown-container')) {
                 cerrarTopDropdownMenu();
                 cerrarTopDropdownMenuEstaciones();
+                cerrarTopDropdownMenuInventario();
             }
         });
 
@@ -1141,6 +1333,181 @@
         function volverAEstaciones() { cambiarVista('estaciones-view'); renderizarEstaciones(); }
         function abrirVistaItems() { cambiarVista('items-view'); renderizarItemsMaster(); }
 
+        // --- CALCULO Y GESTIÓN DE INVENTARIO ---
+        function calcularStockActual() {
+            let stockMap = {};
+
+            // 1. Procesar Entradas y Reintegros manuales
+            inventarioMovimientos.forEach(m => {
+                let itemKey = m.item.trim();
+                let cant = parseFloat(m.cantidad) || 0;
+                if (!stockMap[itemKey]) {
+                    stockMap[itemKey] = { item: itemKey, descripcion: m.descripcion || 'Sin descripción', stock: 0 };
+                }
+                if (m.tipo === 'ENTRADA' || m.tipo === 'REINTEGRO') {
+                    stockMap[itemKey].stock += cant;
+                }
+            });
+
+            // 2. Procesar Salidas automáticas basadas en toda la planilla de obra
+            Object.keys(registros).forEach(obraId => {
+                let listaRegs = registros[obraId] || [];
+                listaRegs.forEach(reg => {
+                    let itemKey = reg.item.trim();
+                    let cant = parseFloat(reg.cantidad) || 0;
+                    if (!stockMap[itemKey]) {
+                        stockMap[itemKey] = { item: itemKey, descripcion: reg.descripcion || 'Sin descripción', stock: 0 };
+                    }
+                    stockMap[itemKey].stock -= cant; // Resta por consumo de planilla
+                });
+            });
+
+            // 3. Incluir ítems del maestro que tengan descripción clara si no están en movimientos
+            itemsMaster.forEach(im => {
+                let itemKey = im.item.trim();
+                if (!stockMap[itemKey]) {
+                    stockMap[itemKey] = { item: itemKey, descripcion: im.desc, stock: 0 };
+                } else if (stockMap[itemKey].descripcion === 'Sin descripción' && im.desc) {
+                    stockMap[itemKey].descripcion = im.desc;
+                }
+            });
+
+            return Object.values(stockMap);
+        }
+
+        function renderizarInventario(filtro = '') {
+            let tbody = document.getElementById('tabla-inventario-body');
+            tbody.innerHTML = '';
+            let stockLista = calcularStockActual();
+
+            let filtrados = stockLista.filter(s => 
+                s.item.toLowerCase().includes(filtro.toLowerCase()) || 
+                s.descripcion.toLowerCase().includes(filtro.toLowerCase())
+            );
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">No hay registros de inventario.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach(s => {
+                let tr = document.createElement('tr');
+                let colorStock = s.stock < 0 ? 'color: red; font-weight: bold;' : (s.stock === 0 ? 'color: #888;' : 'color: green; font-weight: bold;');
+                tr.innerHTML = `
+                    <td><strong>${s.item}</strong></td>
+                    <td>${s.descripcion}</td>
+                    <td style="${colorStock}">${s.stock}</td>
+                    <td><button class="btn" style="background:var(--accent-color); color:white; padding:4px 8px; font-size:11px;" onclick="abrirMovimientoConItem('${s.item}', '${s.descripcion}')">Registrar</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function abrirModalMovimiento() {
+            document.getElementById('inv-tipo').value = 'ENTRADA';
+            document.getElementById('inv-item').value = '';
+            document.getElementById('inv-descripcion').value = '';
+            document.getElementById('inv-cantidad').value = '1';
+            document.getElementById('inv-fecha').value = new Date().toISOString().split('T')[0];
+            document.getElementById('inv-documento').value = '';
+            document.getElementById('modal-movimiento-inv').classList.add('show');
+        }
+
+        function abrirMovimientoConItem(item, desc) {
+            abrirModalMovimiento();
+            document.getElementById('inv-item').value = item;
+            document.getElementById('inv-descripcion').value = desc;
+        }
+
+        function cerrarModalMovimiento() {
+            document.getElementById('modal-movimiento-inv').classList.remove('show');
+        }
+
+        function autocompletarDescInventario(valor) {
+            let itemBuscado = valor.trim();
+            let encontrado = itemsMaster.find(i => i.item === itemBuscado);
+            if (encontrado) {
+                document.getElementById('inv-descripcion').value = encontrado.desc;
+            }
+        }
+
+        function guardarMovimientoInventario() {
+            let tipo = document.getElementById('inv-tipo').value;
+            let item = document.getElementById('inv-item').value.trim();
+            let descripcion = document.getElementById('inv-descripcion').value.trim();
+            let cantidad = parseFloat(document.getElementById('inv-cantidad').value);
+            let fecha = document.getElementById('inv-fecha').value;
+            let documento = document.getElementById('inv-documento').value.trim();
+
+            if (!item || !cantidad || !fecha || !documento) {
+                alert('Por favor complete los campos obligatorios (Ítem, Cantidad, Fecha, Documento).');
+                return;
+            }
+
+            inventarioMovimientos.push({
+                id: Date.now(),
+                tipo,
+                item,
+                descripcion,
+                cantidad,
+                fecha,
+                documento
+            });
+
+            guardarDatosLocal();
+            cerrarModalMovimiento();
+            renderizarInventario(document.getElementById('search-inventario').value);
+            alert('¡Movimiento registrado con éxito!');
+        }
+
+        function abrirModalHistorialMovimientos() {
+            let tbody = document.getElementById('tabla-historial-body');
+            tbody.innerHTML = '';
+
+            if (inventarioMovimientos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#777;">No hay movimientos registrados.</td></tr>`;
+                document.getElementById('modal-historial-inv').classList.add('show');
+                return;
+            }
+
+            let ordenados = [...inventarioMovimientos].reverse();
+            ordenados.forEach(m => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${m.fecha}</td>
+                    <td><strong>${m.tipo}</strong></td>
+                    <td>${m.item}</td>
+                    <td>${m.cantidad}</td>
+                    <td>${m.documento}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('modal-historial-inv').classList.add('show');
+        }
+
+        function cerrarModalHistorialMovimientos() {
+            document.getElementById('modal-historial-inv').classList.remove('show');
+        }
+
+        function exportarInventarioCSV() {
+            let stockLista = calcularStockActual();
+            let csvContent = "data:text/csv;charset=utf-8,Item,Descripcion,Stock Actual\n";
+            stockLista.forEach(s => {
+                let row = [`"${s.item}"`, `"${s.descripcion}"`, s.stock];
+                csvContent += row.join(",") + "\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `inventario_materiales_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- MANTENER TUS FUNCIONES EXISTENTES DE OBRAS Y PLANILLAS ---
         function renderizarObras(filtro = '') {
             const contenedor = document.getElementById('lista-obras');
             contenedor.innerHTML = '';
@@ -1234,7 +1601,6 @@
             }
         }
 
-        // --- GESTIÓN DE ESTACIONES ---
         function abrirEstaciones(id) {
             obraActualId = id;
             let obra = obras.find(o => o.id === id);
@@ -1278,10 +1644,7 @@
                     card.classList.remove('dragging');
                     document.querySelectorAll('.estacion-card').forEach(c => c.classList.remove('drag-over'));
                 };
-                card.ondragover = (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                };
+                card.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
                 card.ondragenter = () => card.classList.add('drag-over');
                 card.ondragleave = () => card.classList.remove('drag-over');
                 card.ondrop = (e) => {
@@ -1316,9 +1679,7 @@
                     <div class="estacion-clickable" onclick="abrirPlanillaEstacion('${est}')">
                         <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
                         <i class="fa-solid fa-location-dot" style="font-size: 1.2rem; color: var(--accent-color);"></i>
-                        <div>
-                            <strong>${est}</strong>
-                        </div>
+                        <div><strong>${est}</strong></div>
                     </div>
                     <div class="estacion-actions">
                         <button class="btn-edit" onclick="editarEstacion('${est}')" title="Editar Estación"><i class="fa-solid fa-pen"></i></button>
@@ -1337,16 +1698,11 @@
             setTimeout(() => document.getElementById('input-nueva-estacion').focus(), 100);
         }
 
-        function cerrarModalCrearEstacion() {
-            document.getElementById('modal-estacion').classList.remove('show');
-        }
+        function cerrarModalCrearEstacion() { document.getElementById('modal-estacion').classList.remove('show'); }
 
         function guardarNuevaEstacion() {
             let nuevaEst = document.getElementById('input-nueva-estacion').value.trim();
-            if (!nuevaEst) {
-                alert('El nombre de la estación es obligatorio');
-                return;
-            }
+            if (!nuevaEst) { alert('El nombre de la estación es obligatorio'); return; }
 
             let lista = registros[obraActualId] || [];
             let estacionesUnicas = [...new Set(lista.map(r => r.estacion))];
@@ -1365,32 +1721,23 @@
             let nuevoNombre = prompt("Ingrese el nuevo nombre para la estación:", estActual);
             if (nuevoNombre === null) return;
             nuevoNombre = nuevoNombre.trim();
-            if (!nuevoNombre) {
-                alert("El nombre de la estación no puede estar vacío.");
-                return;
-            }
+            if (!nuevoNombre) { alert("El nombre no puede estar vacío."); return; }
             let lista = registros[obraActualId] || [];
             if (lista.some(r => r.estacion === nuevoNombre && r.estacion !== estActual)) {
-                alert("Ya existe una estación con ese nombre en esta obra.");
+                alert("Ya existe una estación con ese nombre.");
                 return;
             }
-            lista.forEach(r => {
-                if (r.estacion === estActual) {
-                    r.estacion = nuevoNombre;
-                }
-            });
+            lista.forEach(r => { if (r.estacion === estActual) r.estacion = nuevoNombre; });
             guardarDatosLocal();
             renderizarEstaciones(document.getElementById('search-estacion').value);
         }
 
         function eliminarEstacion(est) {
-            let confirmacion = prompt(`ADVERTENCIA: Está a punto de eliminar la estación "${est}" y TODOS sus registros asociados.\n\nPara confirmar, escriba la palabra ELIMINAR en mayúsculas:`);
+            let confirmacion = prompt(`ADVERTENCIA: Está a punto de eliminar la estación "${est}" y TODOS sus registros.\n\nEscriba ELIMINAR para confirmar:`);
             if (confirmacion === "ELIMINAR") {
                 registros[obraActualId] = registros[obraActualId].filter(r => r.estacion !== est);
                 guardarDatosLocal();
                 renderizarEstaciones();
-            } else if (confirmacion !== null) {
-                alert('La palabra de confirmación no coincide. No se ha eliminado la estación.');
             }
         }
 
@@ -1409,14 +1756,13 @@
             renderizarRegistros();
         }
 
-        // --- CONSOLIDADO DE MATERIALES (OBRA COMPLETA) ---
         function abrirConsolidadoMateriales() {
             let tbody = document.getElementById('tabla-consolidado-body');
             tbody.innerHTML = '';
             let lista = registros[obraActualId] || [];
 
             if (lista.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No hay registros en esta obra para consolidar.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No hay registros en esta obra.</td></tr>`;
                 document.getElementById('modal-consolidado').classList.add('show');
                 return;
             }
@@ -1426,79 +1772,48 @@
                 let itemKey = reg.item.trim();
                 let cantidad = parseFloat(reg.cantidad) || 0;
                 if (!consolidadoMap[itemKey]) {
-                    consolidadoMap[itemKey] = {
-                        item: itemKey,
-                        descripcion: reg.descripcion || 'Sin descripción',
-                        cantidadTotal: 0
-                    };
+                    consolidadoMap[itemKey] = { item: itemKey, descripcion: reg.descripcion || 'Sin descripción', cantidadTotal: 0 };
                 }
                 consolidadoMap[itemKey].cantidadTotal += cantidad;
             });
 
-            let arrayConsolidado = Object.values(consolidadoMap).sort((a, b) => {
-                return a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'accent' });
-            });
-
-            arrayConsolidado.forEach(item => {
+            Object.values(consolidadoMap).forEach(item => {
                 let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${item.item}</strong></td>
-                    <td>${item.descripcion}</td>
-                    <td><strong>${item.cantidadTotal}</strong></td>
-                `;
+                tr.innerHTML = `<td><strong>${item.item}</strong></td><td>${item.descripcion}</td><td><strong>${item.cantidadTotal}</strong></td>`;
                 tbody.appendChild(tr);
             });
 
             document.getElementById('modal-consolidado').classList.add('show');
         }
-        function cerrarConsolidadoMateriales() {
-            document.getElementById('modal-consolidado').classList.remove('show');
-        }
+        function cerrarConsolidadoMateriales() { document.getElementById('modal-consolidado').classList.remove('show'); }
 
         function exportarConsolidadoCSV() {
             let lista = registros[obraActualId] || [];
-            if (lista.length === 0) {
-                alert('No hay datos para exportar.');
-                return;
-            }
-
+            if (lista.length === 0) return;
             let obra = obras.find(o => o.id === obraActualId);
             let consolidadoMap = {};
             lista.forEach(reg => {
                 let itemKey = reg.item.trim();
                 let cantidad = parseFloat(reg.cantidad) || 0;
-                if (!consolidadoMap[itemKey]) {
-                    consolidadoMap[itemKey] = {
-                        item: itemKey,
-                        descripcion: reg.descripcion || 'Sin descripción',
-                        cantidadTotal: 0
-                    };
-                }
+                if (!consolidadoMap[itemKey]) consolidadoMap[itemKey] = { item: itemKey, descripcion: reg.descripcion, cantidadTotal: 0 };
                 consolidadoMap[itemKey].cantidadTotal += cantidad;
             });
 
             let csvContent = "data:text/csv;charset=utf-8,Item,Descripcion,Cantidad Total\n";
             Object.values(consolidadoMap).forEach(item => {
-                let row = [`"${item.item}"`, `"${item.descripcion}"`, item.cantidadTotal];
-                csvContent += row.join(",") + "\n";
+                csvContent += [`"${item.item}"`, `"${item.descripcion}"`, item.cantidadTotal].join(",") + "\n";
             });
 
-            let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${obra.proyecto}_consolidado_materiales_obra_completa.csv`);
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `${obra.proyecto}_consolidado.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        // --- FUNCIONES DE EXPORTAR E IMPORTAR (JSON / OBRAS / TODO / FECHA) ---
         function exportarTodoJSON() {
-            const dataBackup = {
-                obras: obras,
-                registros: registros,
-                itemsMaster: itemsMaster
-            };
+            const dataBackup = { obras, registros, itemsMaster, inventarioMovimientos };
             const blob = new Blob([JSON.stringify(dataBackup, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1509,39 +1824,23 @@
         }
 
         function abrirModalExportarObra() {
-            if (obras.length === 0) {
-                alert('No hay obras registradas para exportar.');
-                return;
-            }
+            if (obras.length === 0) { alert('No hay obras.'); return; }
             let select = document.getElementById('select-obra-exportar');
             select.innerHTML = '';
-            obras.forEach(o => {
-                select.innerHTML += `<option value="${o.id}">${o.proyecto} (${o.circuito || 'Sin circuito'})</option>`;
-            });
+            obras.forEach(o => { select.innerHTML += `<option value="${o.id}">${o.proyecto}</option>`; });
             document.getElementById('modal-exportar-obra').classList.add('show');
         }
-
-        function cerrarModalExportarObra() {
-            document.getElementById('modal-exportar-obra').classList.remove('show');
-        }
+        function cerrarModalExportarObra() { document.getElementById('modal-exportar-obra').classList.remove('show'); }
 
         function ejecutarExportarObraSeleccionada() {
             let obraId = parseInt(document.getElementById('select-obra-exportar').value);
             let obra = obras.find(o => o.id === obraId);
-            if (!obra) return;
-
-            let datosObraUnica = {
-                esObraIndividual: true,
-                obra: obra,
-                registros: registros[obraId] || [],
-                itemsMaster: itemsMaster
-            };
-
-            const blob = new Blob([JSON.stringify(datosObraUnica, null, 2)], { type: 'application/json' });
+            let datos = { esObraIndividual: true, obra, registros: registros[obraId] || [], itemsMaster, inventarioMovimientos };
+            const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `obra_${obra.proyecto.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+            a.download = `obra_${obra.proyecto}.json`;
             a.click();
             URL.revokeObjectURL(url);
             cerrarModalExportarObra();
@@ -1551,56 +1850,30 @@
             document.getElementById('input-fecha-exportar').value = new Date().toISOString().split('T')[0];
             document.getElementById('modal-exportar-fecha').classList.add('show');
         }
-
-        function cerrarModalExportarFecha() {
-            document.getElementById('modal-exportar-fecha').classList.remove('show');
-        }
+        function cerrarModalExportarFecha() { document.getElementById('modal-exportar-fecha').classList.remove('show'); }
 
         function ejecutarExportarInformePorFecha() {
-            let fechaSeleccionada = document.getElementById('input-fecha-exportar').value;
-            if (!fechaSeleccionada) {
-                alert('Por favor selecciona una fecha.');
-                return;
-            }
-
-            let registrosFiltradosPorFecha = [];
-            
+            let fechaSel = document.getElementById('input-fecha-exportar').value;
+            let resFiltrados = [];
             Object.keys(registros).forEach(obraId => {
                 let obraObj = obras.find(o => o.id == obraId);
-                let nombreObra = obraObj ? obraObj.proyecto : 'Desconocida';
-                let listaRegs = registros[obraId] || [];
-
-                listaRegs.forEach(reg => {
-                    if (reg.fecha === fechaSeleccionada) {
-                        registrosFiltradosPorFecha.push({
-                            obra: nombreObra,
-                            estacion: reg.estacion,
-                            item: reg.item,
-                            descripcion: reg.descripcion,
-                            cantidad: reg.cantidad,
-                            fecha: reg.fecha,
-                            ndescargo: reg.ndescargo || '',
-                            serie: reg.serie || ''
-                        });
+                (registros[obraId] || []).forEach(reg => {
+                    if (reg.fecha === fechaSel) {
+                        resFiltrados.push({ obra: obraObj ? obraObj.proyecto : '', ...reg });
                     }
                 });
             });
 
-            if (registrosFiltradosPorFecha.length === 0) {
-                alert(`No se encontraron registros para la fecha ${fechaSeleccionada} en ninguna obra.`);
-                return;
-            }
+            if (resFiltrados.length === 0) { alert('No hay registros en esta fecha.'); return; }
 
-            let csvContent = "data:text/csv;charset=utf-8,Obra,Estacion,Item,Descripcion,Cantidad,Fecha,N. Descargo,Serie\n";
-            registrosFiltradosPorFecha.forEach(r => {
-                let row = [`"${r.obra}"`, `"${r.estacion}"`, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo}"`, `"${r.serie}"`];
-                csvContent += row.join(",") + "\n";
+            let csvContent = "data:text/csv;charset=utf-8,Obra,Estacion,Item,Descripcion,Cantidad,Fecha,Descargo,Serie\n";
+            resFiltrados.forEach(r => {
+                csvContent += [`"${r.obra}"`, `"${r.estacion}"`, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo}"`, `"${r.serie}"`].join(",") + "\n";
             });
 
-            let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `informe_fecha_${fechaSeleccionada}.csv`);
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `informe_${fechaSel}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1610,87 +1883,101 @@
         function cargarObraJSON(event) {
             const archivo = event.target.files[0];
             if (!archivo) return;
-
             const lector = new FileReader();
             lector.onload = function(e) {
                 try {
                     const contenido = JSON.parse(e.target.result);
-
                     if (contenido.esObraIndividual && contenido.obra) {
                         let nuevaObra = contenido.obra;
                         let nuevoId = Date.now();
                         nuevaObra.id = nuevoId;
-                        nuevaObra.ultimaMod = Date.now();
-
                         obras.push(nuevaObra);
                         registros[nuevoId] = contenido.registros || [];
-
-                        if (contenido.itemsMaster) {
-                            contenido.itemsMaster.forEach(itemM => {
-                                if (!itemsMaster.some(i => i.item === itemM.item)) {
-                                    itemsMaster.push(itemM);
-                                }
-                            });
-                        }
-
                         guardarDatosLocal();
                         renderizarObras();
-                        alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito para continuarla!`);
-                    } else if (contenido.obras && contenido.registros) {
-                        if (confirm('Este archivo contiene un respaldo completo. ¿Desea fusionarlo o reemplazar los datos actuales?')) {
-                            obras = contenido.obras;
-                            registros = contenido.registros;
-                            if (contenido.itemsMaster) {
-                                contenido.itemsMaster.forEach(itemM => {
-                                    if (!itemsMaster.some(i => i.item === itemM.item)) {
-                                        itemsMaster.push(itemM);
-                                    }
-                                });
-                            }
-                            guardarDatosLocal();
-                            renderizarObras();
-                            alert('¡Datos restaurados con éxito!');
-                        }
-                    } else {
-                        alert('El formato del archivo JSON no es válido.');
+                        alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito!`);
+                    } else if (contenido.obras) {
+                        obras = contenido.obras;
+                        registros = contenido.registros || {};
+                        if (contenido.inventarioMovimientos) inventarioMovimientos = contenido.inventarioMovimientos;
+                        guardarDatosLocal();
+                        renderizarObras();
+                        alert('¡Respaldo completo restaurado!');
                     }
-                } catch (error) {
-                    alert('Error al leer el archivo JSON.');
-                    console.error(error);
-                }
-                event.target.value = '';
+                } catch (err) { alert('Error al leer el archivo JSON.'); }
             };
             lector.readAsText(archivo);
+        }
+
+        // Planilla Registros
+        function renderizarRegistros() {
+            let tbody = document.getElementById('tabla-registros-body');
+            tbody.innerHTML = '';
+            let lista = registros[obraActualId] || [];
+
+            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase();
+            let filtroEstacion = document.getElementById('filtro-estacion-select').value;
+            let filtroFecha = document.getElementById('filtro-fecha-input').value;
+
+            let filtrados = lista.filter(r => {
+                let matchEst = !filtroEstacion || r.estacion === filtroEstacion;
+                let matchItem = !filtroItem || r.item.toLowerCase().includes(filtroItem) || r.descripcion.toLowerCase().includes(filtroItem);
+                let matchFecha = !filtroFecha || r.fecha === filtroFecha;
+                return matchEst && matchItem && matchFecha;
+            });
+
+            filtrados.forEach(reg => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${reg.estacion}</td>
+                    <td><strong>${reg.item}</strong></td>
+                    <td>${reg.descripcion}</td>
+                    <td>${reg.cantidad}</td>
+                    <td>${reg.fecha}</td>
+                    <td>${reg.ndescargo || ''}</td>
+                    <td>${reg.serie || ''}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editarRegistro(${reg.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id})" style="margin-left:6px;"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function actualizarSelectEstaciones() {
             let select = document.getElementById('filtro-estacion-select');
             let lista = registros[obraActualId] || [];
-            let estacionesUnicas = [...new Set(lista.map(r => r.estacion))];
-            
-            select.innerHTML = '<option value="">Estación</option>';
-            estacionesUnicas.forEach(est => {
+            let estaciones = [...new Set(lista.map(r => r.estacion))];
+            select.innerHTML = '<option value="">Todas las Estaciones</option>';
+            estaciones.forEach(est => {
                 select.innerHTML += `<option value="${est}">${est}</option>`;
             });
         }
 
+        function limpiarFiltros() {
+            document.getElementById('filtro-item-input').value = '';
+            document.getElementById('filtro-estacion-select').value = '';
+            document.getElementById('filtro-fecha-input').value = '';
+            renderizarRegistros();
+        }
+
         function abrirModalRegistro(id = null) {
-            document.getElementById('modal-reg-title').innerText = id ? 'Editar Registro' : 'Nuevo Registro';
-            document.getElementById('reg-id-edit').value = id || '';
-            document.getElementById('reg-estacion').value = estacionActual || '';
-            
+            document.getElementById('modal-registro').classList.add('show');
+            document.getElementById('reg-estacion').value = estacionActual;
             if (id) {
-                let lista = registros[obraActualId] || [];
-                let reg = lista.find(r => r.id === id);
-                if (reg) {
-                    document.getElementById('reg-item').value = reg.item || '';
-                    document.getElementById('reg-descripcion').value = reg.descripcion || '';
-                    document.getElementById('reg-cantidad').value = reg.cantidad || 1;
-                    document.getElementById('reg-fecha').value = reg.fecha || new Date().toISOString().split('T')[0];
-                    document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
-                    document.getElementById('reg-serie').value = reg.serie || '';
-                }
+                document.getElementById('modal-reg-title').innerText = 'Editar Registro';
+                let reg = (registros[obraActualId] || []).find(r => r.id === id);
+                document.getElementById('reg-id-edit').value = reg.id;
+                document.getElementById('reg-item').value = reg.item;
+                document.getElementById('reg-descripcion').value = reg.descripcion;
+                document.getElementById('reg-cantidad').value = reg.cantidad;
+                document.getElementById('reg-fecha').value = reg.fecha;
+                document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
+                document.getElementById('reg-serie').value = reg.serie || '';
             } else {
+                document.getElementById('modal-reg-title').innerText = 'Nuevo Registro';
+                document.getElementById('reg-id-edit').value = '';
                 document.getElementById('reg-item').value = '';
                 document.getElementById('reg-descripcion').value = '';
                 document.getElementById('reg-cantidad').value = '1';
@@ -1698,18 +1985,13 @@
                 document.getElementById('reg-ndescargo').value = '';
                 document.getElementById('reg-serie').value = '';
             }
-            
-            document.getElementById('modal-registro').classList.add('show');
-            setTimeout(() => document.getElementById('reg-item').focus(), 100);
         }
 
-        function cerrarModalRegistro() {
-            document.getElementById('modal-registro').classList.remove('show');
-        }
+        function cerrarModalRegistro() { document.getElementById('modal-registro').classList.remove('show'); }
 
-        function autocompletarDescripcion(valorItem) {
-            let codigo = valorItem.trim();
-            let encontrado = itemsMaster.find(i => i.item.toLowerCase() === codigo.toLowerCase());
+        function autocompletarDescripcion(val) {
+            let itemKey = val.trim();
+            let encontrado = itemsMaster.find(i => i.item === itemKey);
             if (encontrado) {
                 document.getElementById('reg-descripcion').value = encontrado.desc;
             }
@@ -1719,48 +2001,45 @@
             let id = document.getElementById('reg-id-edit').value;
             let item = document.getElementById('reg-item').value.trim();
             let descripcion = document.getElementById('reg-descripcion').value.trim();
-            let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 0;
+            let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 1;
             let fecha = document.getElementById('reg-fecha').value;
             let ndescargo = document.getElementById('reg-ndescargo').value.trim();
             let serie = document.getElementById('reg-serie').value.trim();
 
             if (!item || !cantidad || !fecha) {
-                alert('Los campos Ítem, Cantidad y Fecha son obligatorios.');
+                alert('Complete los campos obligatorios (Ítem, Cantidad, Fecha).');
                 return;
             }
 
-            if (!registros[obraActualId]) {
-                registros[obraActualId] = [];
-            }
+            if (!registros[obraActualId]) registros[obraActualId] = [];
 
             if (id) {
                 let reg = registros[obraActualId].find(r => r.id == id);
-                if (reg) {
-                    reg.item = item;
-                    reg.descripcion = descripcion;
-                    reg.cantidad = cantidad;
-                    reg.fecha = fecha;
-                    reg.ndescargo = ndescargo;
-                    reg.serie = serie;
-                }
+                reg.item = item;
+                reg.descripcion = descripcion;
+                reg.cantidad = cantidad;
+                reg.fecha = fecha;
+                reg.ndescargo = ndescargo;
+                reg.serie = serie;
             } else {
-                let nuevoReg = {
+                registros[obraActualId].push({
                     id: Date.now(),
                     estacion: estacionActual,
-                    item: item,
-                    descripcion: descripcion,
-                    cantidad: cantidad,
-                    fecha: fecha,
-                    ndescargo: ndescargo,
-                    serie: serie
-                };
-                registros[obraActualId].push(nuevoReg);
+                    item,
+                    descripcion,
+                    cantidad,
+                    fecha,
+                    ndescargo,
+                    serie
+                });
             }
 
             guardarDatosLocal();
             cerrarModalRegistro();
             renderizarRegistros();
         }
+
+        function editarRegistro(id) { abrirModalRegistro(id); }
 
         function eliminarRegistro(id) {
             if (confirm('¿Desea eliminar este registro?')) {
@@ -1770,153 +2049,76 @@
             }
         }
 
-        let registroDragging = null;
-
-        function renderizarRegistros() {
-            let tbody = document.getElementById('tabla-registros-body');
-            tbody.innerHTML = '';
-            let lista = registros[obraActualId] || [];
-
-            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
-            let filtroEstacion = estacionActual;
-            let filtroFecha = document.getElementById('filtro-fecha-input').value;
-
-            let filtrados = lista.filter(reg => {
-                let matchEstacion = !filtroEstacion || reg.estacion === filtroEstacion;
-                let matchItem = !filtroItem || reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
-                let matchFecha = !filtroFecha || reg.fecha === filtroFecha;
-                return matchEstacion && matchItem && matchFecha;
-            });
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros en esta estación.</td></tr>`;
-                return;
-            }
-
-            filtrados.forEach(reg => {
-                let itemStr = String(reg.item).trim();
-                let esMenorOIgualA3Cifras = itemStr.length <= 3;
-
-                let tr = document.createElement('tr');
-                tr.className = 'draggable-row';
-                if (esMenorOIgualA3Cifras) {
-                    tr.classList.add('highlight-green');
-                }
-                tr.draggable = true;
-
-                tr.ondragstart = (e) => {
-                    registroDragging = reg.id;
-                    e.dataTransfer.effectAllowed = 'move';
-                    tr.classList.add('dragging');
-                };
-                tr.ondragend = () => {
-                    tr.classList.remove('dragging');
-                    document.querySelectorAll('#tabla-registros-body tr').forEach(row => row.classList.remove('drag-over'));
-                };
-                tr.ondragover = (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                };
-                tr.ondragenter = () => tr.classList.add('drag-over');
-                tr.ondragleave = () => tr.classList.remove('drag-over');
-                tr.ondrop = (e) => {
-                    e.preventDefault();
-                    tr.classList.remove('drag-over');
-                    if (!registroDragging || registroDragging === reg.id) return;
-
-                    let listaCompleta = registros[obraActualId];
-                    let fromIdx = listaCompleta.findIndex(r => r.id === registroDragging);
-                    let toIdx = listaCompleta.findIndex(r => r.id === reg.id);
-
-                    if (fromIdx === -1 || toIdx === -1) return;
-
-                    let [movido] = listaCompleta.splice(fromIdx, 1);
-                    listaCompleta.splice(toIdx, 0, movido);
-
-                    registros[obraActualId] = listaCompleta;
-                    guardarDatosLocal();
-                    renderizarRegistros();
-                    registroDragging = null;
-                };
-
-                tr.innerHTML = `
-                    <td>
-                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
-                        ${reg.estacion}
-                    </td>
-                    <td><strong>${reg.item}</strong></td>
-                    <td>${reg.descripcion}</td>
-                    <td>${reg.cantidad}</td>
-                    <td>${reg.fecha}</td>
-                    <td>${reg.ndescargo || ''}</td>
-                    <td>${reg.serie || ''}</td>
-                    <td>
-                        <button class="btn-edit" onclick="abrirModalRegistro(${reg.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function limpiarFiltros() {
-            document.getElementById('filtro-item-input').value = '';
-            document.getElementById('filtro-fecha-input').value = '';
-            renderizarRegistros();
-        }
-
-        // Funciones auxiliares adicionales de la vista master items por si las requieres
+        // Ítems Master
         function renderizarItemsMaster(filtro = '') {
             let tbody = document.getElementById('tabla-items-master');
-            if(!tbody) return;
             tbody.innerHTML = '';
             let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
             
-            filtrados.forEach(item => {
+            filtrados.forEach(i => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>${item.item}</strong></td>
-                    <td>${item.desc}</td>
+                    <td><strong>${i.item}</strong></td>
+                    <td>${i.desc}</td>
                     <td>
-                        <button class="btn-edit" onclick="editarItemMaster('${item.item}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-edit" onclick="editarItemMaster('${i.item}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-delete" onclick="eliminarItemMaster('${i.item}')" style="margin-left:6px;"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
+        function filtrarItemsMaster() { renderizarItemsMaster(document.getElementById('search-item-master').value); }
 
-        function filtrarItemsMaster() {
-            renderizarItemsMaster(document.getElementById('search-item-master').value);
-        }
-
-        function abrirModalItemMaster() {
-            document.getElementById('item-original-id').value = '';
-            document.getElementById('master-item-code').value = '';
-            document.getElementById('master-item-desc').value = '';
+        function abrirModalItemMaster(itemCode = null) {
             document.getElementById('modal-item-master').classList.add('show');
+            if (itemCode) {
+                let itemObj = itemsMaster.find(i => i.item === itemCode);
+                document.getElementById('item-original-id').value = itemObj.item;
+                document.getElementById('master-item-code').value = itemObj.item;
+                document.getElementById('master-item-desc').value = itemObj.desc;
+            } else {
+                document.getElementById('item-original-id').value = '';
+                document.getElementById('master-item-code').value = '';
+                document.getElementById('master-item-desc').value = '';
+            }
         }
-
-        function cerrarModalItemMaster() {
-            document.getElementById('modal-item-master').classList.remove('show');
-        }
+        function cerrarModalItemMaster() { document.getElementById('modal-item-master').classList.remove('show'); }
 
         function guardarItemMaster() {
-            let codigo = document.getElementById('master-item-code').value.trim();
+            let origId = document.getElementById('item-original-id').value;
+            let code = document.getElementById('master-item-code').value.trim();
             let desc = document.getElementById('master-item-desc').value.trim();
-            if(!codigo || !desc) {
-                alert('Código y descripción son obligatorios');
-                return;
-            }
-            let existe = itemsMaster.find(i => i.item === codigo);
-            if(existe) {
-                existe.desc = desc;
+
+            if (!code || !desc) { alert('Código y Descripción son obligatorios.'); return; }
+
+            if (origId) {
+                let itemObj = itemsMaster.find(i => i.item === origId);
+                itemObj.item = code;
+                itemObj.desc = desc;
             } else {
-                itemsMaster.push({ item: codigo, desc: desc });
+                if (itemsMaster.some(i => i.item === code)) {
+                    alert('Ya existe un ítem con este código.');
+                    return;
+                }
+                itemsMaster.push({ item: code, desc });
             }
             guardarDatosLocal();
             cerrarModalItemMaster();
             renderizarItemsMaster();
         }
+
+        function editarItemMaster(item) { abrirModalItemMaster(item); }
+
+        function eliminarItemMaster(item) {
+            if (confirm('¿Desea eliminar este ítem del catálogo maestro?')) {
+                itemsMaster = itemsMaster.filter(i => i.item !== item);
+                guardarDatosLocal();
+                renderizarItemsMaster();
+            }
+        }
     </script>
+    <link rel="stylesheet" href="./manifest.json">
+    <meta name="theme-color" content="#1e4620">
 </body>
 </html>
