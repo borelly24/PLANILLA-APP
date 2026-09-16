@@ -1865,25 +1865,20 @@
             renderizarRegistros();
         }
 
-        // --- GESTIÓN DE ÍTEMS MASTER ---
+        // Funciones auxiliares adicionales de la vista master items por si las requieres
         function renderizarItemsMaster(filtro = '') {
             let tbody = document.getElementById('tabla-items-master');
+            if(!tbody) return;
             tbody.innerHTML = '';
             let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No se encontraron ítems.</td></tr>`;
-                return;
-            }
-
-            filtrados.forEach(i => {
+            
+            filtrados.forEach(item => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>${i.item}</strong></td>
-                    <td>${i.desc}</td>
+                    <td><strong>${item.item}</strong></td>
+                    <td>${item.desc}</td>
                     <td>
-                        <button class="btn-edit" onclick="abrirModalItemMaster('${i.item}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-delete" onclick="eliminarItemMaster('${i.item}')" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                        <button class="btn-edit" onclick="editarItemMaster('${item.item}')"><i class="fa-solid fa-pen"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1894,61 +1889,33 @@
             renderizarItemsMaster(document.getElementById('search-item-master').value);
         }
 
-        function abrirModalItemMaster(itemCode = null) {
-            if (itemCode) {
-                let itemObj = itemsMaster.find(i => i.item === itemCode);
-                if (itemObj) {
-                    document.getElementById('item-original-id').value = itemObj.item;
-                    document.getElementById('master-item-code').value = itemObj.item;
-                    document.getElementById('master-item-desc').value = itemObj.desc;
-                }
-            } else {
-                document.getElementById('item-original-id').value = '';
-                document.getElementById('master-item-code').value = '';
-                document.getElementById('master-item-desc').value = '';
-            }
+        function abrirModalItemMaster() {
+            document.getElementById('item-original-id').value = '';
+            document.getElementById('master-item-code').value = '';
+            document.getElementById('master-item-desc').value = '';
             document.getElementById('modal-item-master').classList.add('show');
         }
 
         function cerrarModalItemMaster() {
-            document.getElementById('modal-item-master').classList.add('show'); // o remove class
             document.getElementById('modal-item-master').classList.remove('show');
         }
 
         function guardarItemMaster() {
-            let originalId = document.getElementById('item-original-id').value;
-            let code = document.getElementById('master-item-code').value.trim();
+            let codigo = document.getElementById('master-item-code').value.trim();
             let desc = document.getElementById('master-item-desc').value.trim();
-
-            if (!code || !desc) {
-                alert('El código y la descripción son obligatorios.');
+            if(!codigo || !desc) {
+                alert('Código y descripción son obligatorios');
                 return;
             }
-
-            if (originalId) {
-                let idx = itemsMaster.findIndex(i => i.item === originalId);
-                if (idx !== -1) {
-                    itemsMaster[idx] = { item: code, desc: desc };
-                }
+            let existe = itemsMaster.find(i => i.item === codigo);
+            if(existe) {
+                existe.desc = desc;
             } else {
-                if (itemsMaster.some(i => i.item === code)) {
-                    alert('Ya existe un ítem con ese código.');
-                    return;
-                }
-                itemsMaster.push({ item: code, desc: desc });
+                itemsMaster.push({ item: codigo, desc: desc });
             }
-
             guardarDatosLocal();
             cerrarModalItemMaster();
             renderizarItemsMaster();
-        }
-
-        function eliminarItemMaster(code) {
-            if (confirm(`¿Desea eliminar el ítem ${code} del listado maestro?`)) {
-                itemsMaster = itemsMaster.filter(i => i.item !== code);
-                guardarDatosLocal();
-                renderizarItemsMaster();
-            }
         }
     </script>
 </body>
