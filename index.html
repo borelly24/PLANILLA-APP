@@ -526,15 +526,15 @@
         <div class="table-container">
             <table style="width: 100%; table-layout: fixed;">
                 <colgroup>
-                    <col style="width: 15%;"> <!-- Columna 1: Ítem -->
-                    <col style="width: 60%;"> <!-- Columna 2: Descripción -->
-                    <col style="width: 25%;"> <!-- Columna 3: Acción -->
+                    <col style="width: 10%;"> <!-- Columna 1: Ítem -->
+                    <col style="width: 75%;"> <!-- Columna 2: Descripción -->
+                    <col style="width: 15%;"> <!-- Columna 3: Acción -->
                 </colgroup>
                 <thead>
                     <tr>
                         <th>Ítem</th>
                         <th>Descripción</th>
-                        <th>Acciones</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-items-master"></tbody>
@@ -604,8 +604,7 @@
     <!-- MODAL: CREAR ESTACIÓN -->
     <div class="modal" id="modal-estacion">
         <div class="modal-content">
-            <h3 style="margin-bottom: 15px;" id="modal-estacion-title">Crear Nueva Estación</h3>
-            <input type="hidden" id="estacion-original-edit">
+            <h3 style="margin-bottom: 15px;">Crear Nueva Estación</h3>
             <div class="form-group">
                 <label>Nombre / Código de la Estación*</label>
                 <input type="text" id="input-nueva-estacion" placeholder="Ej: EPP 01-1">
@@ -690,7 +689,7 @@
     <!-- MODAL: NUEVO / EDITAR ITEM MAESTRO -->
     <div class="modal" id="modal-item-master">
         <div class="modal-content">
-            <h3 style="margin-bottom: 15px;" id="modal-item-title">Gestión de Ítem</h3>
+            <h3 style="margin-bottom: 15px;">Gestión de Ítem</h3>
             <input type="hidden" id="item-original-id">
             <div class="form-group">
                 <label>Código de Ítem*</label>
@@ -1332,17 +1331,9 @@
 
         function filtrarEstaciones() { renderizarEstaciones(document.getElementById('search-estacion').value); }
 
-        function abrirModalCrearEstacion(estacionAntigua = null) {
+        function abrirModalCrearEstacion() {
+            document.getElementById('input-nueva-estacion').value = '';
             document.getElementById('modal-estacion').classList.add('show');
-            if (estacionAntigua) {
-                document.getElementById('modal-estacion-title').innerText = 'Editar Estación';
-                document.getElementById('estacion-original-edit').value = estacionAntigua;
-                document.getElementById('input-nueva-estacion').value = estacionAntigua;
-            } else {
-                document.getElementById('modal-estacion-title').innerText = 'Crear Nueva Estación';
-                document.getElementById('estacion-original-edit').value = '';
-                document.getElementById('input-nueva-estacion').value = '';
-            }
             setTimeout(() => document.getElementById('input-nueva-estacion').focus(), 100);
         }
 
@@ -1352,248 +1343,373 @@
 
         function guardarNuevaEstacion() {
             let nuevaEst = document.getElementById('input-nueva-estacion').value.trim();
-            let estacionAntigua = document.getElementById('estacion-original-edit').value;
-
             if (!nuevaEst) {
                 alert('El nombre de la estación es obligatorio');
                 return;
             }
 
             let lista = registros[obraActualId] || [];
-
-            if (estacionAntigua) {
-                if (estacionAntigua !== nuevaEst) {
-                    let existe = [...new Set(lista.map(r => r.estacion))].includes(nuevaEst);
-                    if (existe) {
-                        alert('Ya existe otra estación con ese nombre.');
-                        return;
-                    }
-                    lista.forEach(r => {
-                        if (r.estacion === estacionAntigua) r.estacion = nuevaEst;
-                    });
-                    guardarDatosLocal();
-                }
-                cerrarModalCrearEstacion();
-                renderizarEstaciones();
-            } else {
-                let existe = [...new Set(lista.map(r => r.estacion))].includes(nuevaEst);
-                if (existe) {
-                    alert('Esta estación ya existe en la obra. Abriendo...');
-                    cerrarModalCrearEstacion();
-                    abrirPlanillaEstacion(nuevaEst);
-                    return;
-                }
-                cerrarModalCrearEstacion();
-                abrirPlanillaEstacion(nuevaEst);
+            let estacionesUnicas = [...new Set(lista.map(r => r.estacion))];
+            
+            if (estacionesUnicas.includes(nuevaEst)) {
+                alert('Error: Ya existe una estación con este nombre en la obra.');
+                return;
             }
+            
+            estacionActual = nuevaEst;
+            cerrarModalCrearEstacion();
+            abrirPlanillaEstacion(nuevaEst);
         }
 
-        function editarEstacion(est) {
-            abrirModalCrearEstacion(est);
+        function editarEstacion(estActual) {
+            let nuevoNombre = prompt("Ingrese el nuevo nombre para la estación:", estActual);
+            if (nuevoNombre === null) return;
+            nuevoNombre = nuevoNombre.trim();
+            if (!nuevoNombre) {
+                alert("El nombre de la estación no puede estar vacío.");
+                return;
+            }
+            let lista = registros[obraActualId] || [];
+            if (lista.some(r => r.estacion === nuevoNombre && r.estacion !== estActual)) {
+                alert("Ya existe una estación con ese nombre en esta obra.");
+                return;
+            }
+            lista.forEach(r => {
+                if (r.estacion === estActual) {
+                    r.estacion = nuevoNombre;
+                }
+            });
+            guardarDatosLocal();
+            renderizarEstaciones(document.getElementById('search-estacion').value);
         }
 
         function eliminarEstacion(est) {
-            if (confirm(`¿Desea eliminar la estación "${est}" y todos los registros asociados a ella?`)) {
-                let lista = registros[obraActualId] || [];
-                registros[obraActualId] = lista.filter(r => r.estacion !== est);
+            let confirmacion = prompt(`ADVERTENCIA: Está a punto de eliminar la estación "${est}" y TODOS sus registros asociados.\n\nPara confirmar, escriba la palabra ELIMINAR en mayúsculas:`);
+            if (confirmacion === "ELIMINAR") {
+                registros[obraActualId] = registros[obraActualId].filter(r => r.estacion !== est);
                 guardarDatosLocal();
                 renderizarEstaciones();
+            } else if (confirmacion !== null) {
+                alert('La palabra de confirmación no coincide. No se ha eliminado la estación.');
             }
         }
 
-        // --- GESTIÓN DE ÍTEMS (PUNTO 1) ---
-        function renderizarItemsMaster(filtro = '') {
-            let tbody = document.getElementById('tabla-items-master');
-            tbody.innerHTML = '';
-
-            let filtrados = itemsMaster.filter(i => 
-                i.item.toLowerCase().includes(filtro.toLowerCase()) || 
-                i.desc.toLowerCase().includes(filtro.toLowerCase())
-            );
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777; padding: 15px;">No se encontraron ítems.</td></tr>`;
-                return;
-            }
-
-            filtrados.forEach(itemObj => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight: bold; text-align: center;">${itemObj.item}</td>
-                    <td>${itemObj.desc}</td>
-                    <td style="text-align: center;">
-                        <button class="btn-edit" onclick="editarItemMaster('${itemObj.item}')" title="Editar" style="margin-right: 10px; background:none; border:none; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-delete" onclick="eliminarItemMaster('${itemObj.item}')" title="Eliminar" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function filtrarItemsMaster() {
-            renderizarItemsMaster(document.getElementById('search-item-master').value);
-        }
-
-        function abrirModalItemMaster(codigo = null) {
-            document.getElementById('modal-item-master').classList.add('show');
-            if (codigo) {
-                document.getElementById('modal-item-title').innerText = 'Editar Ítem';
-                let obj = itemsMaster.find(i => i.item === codigo);
-                document.getElementById('item-original-id').value = obj.item;
-                document.getElementById('master-item-code').value = obj.item;
-                document.getElementById('master-item-desc').value = obj.desc;
-            } else {
-                document.getElementById('modal-item-title').innerText = 'Nuevo Ítem';
-                document.getElementById('item-original-id').value = '';
-                document.getElementById('master-item-code').value = '';
-                document.getElementById('master-item-desc').value = '';
-            }
-        }
-
-        function cerrarModalItemMaster() {
-            document.getElementById('modal-item-master').classList.remove('show');
-        }
-
-        function guardarItemMaster() {
-            let originalId = document.getElementById('item-original-id').value;
-            let codigo = document.getElementById('master-item-code').value.trim();
-            let desc = document.getElementById('master-item-desc').value.trim();
-
-            if (!codigo || !desc) {
-                alert('El código de ítem y la descripción son obligatorios.');
-                return;
-            }
-
-            if (originalId) {
-                // Editando existente
-                let index = itemsMaster.findIndex(i => i.item === originalId);
-                if (index !== -1) {
-                    itemsMaster[index].item = codigo;
-                    itemsMaster[index].desc = desc;
-                }
-            } else {
-                // Creando nuevo
-                let existe = itemsMaster.some(i => i.item === codigo);
-                if (existe) {
-                    alert('Ya existe un ítem con este código.');
-                    return;
-                }
-                itemsMaster.push({ item: codigo, desc: desc });
-            }
-
-            guardarDatosLocal();
-            cerrarModalItemMaster();
-            renderizarItemsMaster();
-        }
-
-        function editarItemMaster(codigo) {
-            abrirModalItemMaster(codigo);
-        }
-
-        function eliminarItemMaster(codigo) {
-            if (confirm(`¿Desea eliminar el ítem "${codigo}" del listado maestro?`)) {
-                itemsMaster = itemsMaster.filter(i => i.item !== codigo);
-                guardarDatosLocal();
-                renderizarItemsMaster();
-            }
-        }
-
-        // --- GESTIÓN DE PLANILLAS Y REGISTROS ---
         function abrirPlanillaEstacion(est) {
             estacionActual = est;
             let obra = obras.find(o => o.id === obraActualId);
 
-            document.getElementById('titulo-planilla').innerText = `PLANILLA: ${est}`;
+            document.getElementById('titulo-planilla').innerText = `${obra.proyecto} - ${est}`;
             document.getElementById('info-general-obra').innerHTML = `
                 <p><strong>Proyecto:</strong> ${obra.proyecto} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Estación:</strong> ${est}</p>
                 <p><strong>Circuito:</strong> ${obra.circuito || 'N/A'} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Ubicación:</strong> ${obra.ubicacion || 'N/A'}</p>
             `;
             cambiarVista('planilla-view');
+            actualizarSelectEstaciones();
+            document.getElementById('filtro-estacion-select').value = est;
             renderizarRegistros();
         }
 
-        function renderizarRegistros() {
-            let tbody = document.getElementById('tabla-registros-body');
+        // --- CONSOLIDADO DE MATERIALES (OBRA COMPLETA) ---
+        function abrirConsolidadoMateriales() {
+            let tbody = document.getElementById('tabla-consolidado-body');
             tbody.innerHTML = '';
+            let lista = registros[obraActualId] || [];
 
-            let lista = (registros[obraActualId] || []).filter(r => r.estacion === estacionActual);
-
-            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase();
-            let filtroFecha = document.getElementById('filtro-fecha-input').value;
-
-            let filtrados = lista.filter(r => {
-                let matchItem = r.item.toLowerCase().includes(filtroItem) || r.descripcion.toLowerCase().includes(filtroItem);
-                let matchFecha = filtroFecha ? r.fecha === filtroFecha : true;
-                return matchItem && matchFecha;
-            });
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777; padding: 20px;">No hay registros en esta estación.</td></tr>`;
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No hay registros en esta obra para consolidar.</td></tr>`;
+                document.getElementById('modal-consolidado').classList.add('show');
                 return;
             }
 
-            filtrados.forEach(reg => {
-                let tr = document.createElement('tr');
-                tr.className = 'draggable-row';
-                tr.dataset.id = reg.id;
+            let consolidadoMap = {};
+            lista.forEach(reg => {
+                let itemKey = reg.item.trim();
+                let cantidad = parseFloat(reg.cantidad) || 0;
+                if (!consolidadoMap[itemKey]) {
+                    consolidadoMap[itemKey] = {
+                        item: itemKey,
+                        descripcion: reg.descripcion || 'Sin descripción',
+                        cantidadTotal: 0
+                    };
+                }
+                consolidadoMap[itemKey].cantidadTotal += cantidad;
+            });
 
+            let arrayConsolidado = Object.values(consolidadoMap).sort((a, b) => {
+                return a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'accent' });
+            });
+
+            arrayConsolidado.forEach(item => {
+                let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${reg.estacion}</td>
-                    <td style="font-weight: bold; text-align: center;">${reg.item}</td>
-                    <td>${reg.descripcion}</td>
-                    <td style="text-align: center;">${reg.cantidad}</td>
-                    <td style="text-align: center;">${reg.fecha}</td>
-                    <td style="text-align: center;">${reg.ndescargo || ''}</td>
-                    <td>${reg.serie || ''}</td>
-                    <td style="text-align: center;">
-                        <button class="btn-edit" onclick="editarRegistro(${reg.id})" style="background:none; border:none; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id})" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
+                    <td><strong>${item.item}</strong></td>
+                    <td>${item.descripcion}</td>
+                    <td><strong>${item.cantidadTotal}</strong></td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            document.getElementById('modal-consolidado').classList.add('show');
+        }
+        function cerrarConsolidadoMateriales() {
+            document.getElementById('modal-consolidado').classList.remove('show');
         }
 
-        function limpiarFiltros() {
-            document.getElementById('filtro-item-input').value = '';
-            document.getElementById('filtro-fecha-input').value = '';
-            renderizarRegistros();
+        function exportarConsolidadoCSV() {
+            let lista = registros[obraActualId] || [];
+            if (lista.length === 0) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+
+            let obra = obras.find(o => o.id === obraActualId);
+            let consolidadoMap = {};
+            lista.forEach(reg => {
+                let itemKey = reg.item.trim();
+                let cantidad = parseFloat(reg.cantidad) || 0;
+                if (!consolidadoMap[itemKey]) {
+                    consolidadoMap[itemKey] = {
+                        item: itemKey,
+                        descripcion: reg.descripcion || 'Sin descripción',
+                        cantidadTotal: 0
+                    };
+                }
+                consolidadoMap[itemKey].cantidadTotal += cantidad;
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8,Item,Descripcion,Cantidad Total\n";
+            Object.values(consolidadoMap).forEach(item => {
+                let row = [`"${item.item}"`, `"${item.descripcion}"`, item.cantidadTotal];
+                csvContent += row.join(",") + "\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${obra.proyecto}_consolidado_materiales_obra_completa.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- FUNCIONES DE EXPORTAR E IMPORTAR (JSON / OBRAS / TODO / FECHA) ---
+        function exportarTodoJSON() {
+            const dataBackup = {
+                obras: obras,
+                registros: registros,
+                itemsMaster: itemsMaster
+            };
+            const blob = new Blob([JSON.stringify(dataBackup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `respaldo_completo_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function abrirModalExportarObra() {
+            if (obras.length === 0) {
+                alert('No hay obras registradas para exportar.');
+                return;
+            }
+            let select = document.getElementById('select-obra-exportar');
+            select.innerHTML = '';
+            obras.forEach(o => {
+                select.innerHTML += `<option value="${o.id}">${o.proyecto} (${o.circuito || 'Sin circuito'})</option>`;
+            });
+            document.getElementById('modal-exportar-obra').classList.add('show');
+        }
+
+        function cerrarModalExportarObra() {
+            document.getElementById('modal-exportar-obra').classList.remove('show');
+        }
+
+        function ejecutarExportarObraSeleccionada() {
+            let obraId = parseInt(document.getElementById('select-obra-exportar').value);
+            let obra = obras.find(o => o.id === obraId);
+            if (!obra) return;
+
+            let datosObraUnica = {
+                esObraIndividual: true,
+                obra: obra,
+                registros: registros[obraId] || [],
+                itemsMaster: itemsMaster
+            };
+
+            const blob = new Blob([JSON.stringify(datosObraUnica, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `obra_${obra.proyecto.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            cerrarModalExportarObra();
+        }
+
+        function abrirModalExportarFecha() {
+            document.getElementById('input-fecha-exportar').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-exportar-fecha').classList.add('show');
+        }
+
+        function cerrarModalExportarFecha() {
+            document.getElementById('modal-exportar-fecha').classList.remove('show');
+        }
+
+        function ejecutarExportarInformePorFecha() {
+            let fechaSeleccionada = document.getElementById('input-fecha-exportar').value;
+            if (!fechaSeleccionada) {
+                alert('Por favor selecciona una fecha.');
+                return;
+            }
+
+            let registrosFiltradosPorFecha = [];
+            
+            Object.keys(registros).forEach(obraId => {
+                let obraObj = obras.find(o => o.id == obraId);
+                let nombreObra = obraObj ? obraObj.proyecto : 'Desconocida';
+                let listaRegs = registros[obraId] || [];
+
+                listaRegs.forEach(reg => {
+                    if (reg.fecha === fechaSeleccionada) {
+                        registrosFiltradosPorFecha.push({
+                            obra: nombreObra,
+                            estacion: reg.estacion,
+                            item: reg.item,
+                            descripcion: reg.descripcion,
+                            cantidad: reg.cantidad,
+                            fecha: reg.fecha,
+                            ndescargo: reg.ndescargo || '',
+                            serie: reg.serie || ''
+                        });
+                    }
+                });
+            });
+
+            if (registrosFiltradosPorFecha.length === 0) {
+                alert(`No se encontraron registros para la fecha ${fechaSeleccionada} en ninguna obra.`);
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,Obra,Estacion,Item,Descripcion,Cantidad,Fecha,N. Descargo,Serie\n";
+            registrosFiltradosPorFecha.forEach(r => {
+                let row = [`"${r.obra}"`, `"${r.estacion}"`, `"${r.item}"`, `"${r.descripcion}"`, r.cantidad, r.fecha, `"${r.ndescargo}"`, `"${r.serie}"`];
+                csvContent += row.join(",") + "\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `informe_fecha_${fechaSeleccionada}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            cerrarModalExportarFecha();
+        }
+
+        function cargarObraJSON(event) {
+            const archivo = event.target.files[0];
+            if (!archivo) return;
+
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                try {
+                    const contenido = JSON.parse(e.target.result);
+
+                    if (contenido.esObraIndividual && contenido.obra) {
+                        let nuevaObra = contenido.obra;
+                        let nuevoId = Date.now();
+                        nuevaObra.id = nuevoId;
+                        nuevaObra.ultimaMod = Date.now();
+
+                        obras.push(nuevaObra);
+                        registros[nuevoId] = contenido.registros || [];
+
+                        if (contenido.itemsMaster) {
+                            contenido.itemsMaster.forEach(itemM => {
+                                if (!itemsMaster.some(i => i.item === itemM.item)) {
+                                    itemsMaster.push(itemM);
+                                }
+                            });
+                        }
+
+                        guardarDatosLocal();
+                        renderizarObras();
+                        alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito para continuarla!`);
+                    } else if (contenido.obras && contenido.registros) {
+                        if (confirm('Este archivo contiene un respaldo completo. ¿Desea fusionarlo o reemplazar los datos actuales?')) {
+                            obras = contenido.obras;
+                            registros = contenido.registros;
+                            if (contenido.itemsMaster) {
+                                contenido.itemsMaster.forEach(itemM => {
+                                    if (!itemsMaster.some(i => i.item === itemM.item)) {
+                                        itemsMaster.push(itemM);
+                                    }
+                                });
+                            }
+                            guardarDatosLocal();
+                            renderizarObras();
+                            alert('¡Datos restaurados con éxito!');
+                        }
+                    } else {
+                        alert('El formato del archivo JSON no es válido.');
+                    }
+                } catch (error) {
+                    alert('Error al leer el archivo JSON.');
+                    console.error(error);
+                }
+                event.target.value = '';
+            };
+            lector.readAsText(archivo);
+        }
+
+        function actualizarSelectEstaciones() {
+            let select = document.getElementById('filtro-estacion-select');
+            let lista = registros[obraActualId] || [];
+            let estacionesUnicas = [...new Set(lista.map(r => r.estacion))];
+            
+            select.innerHTML = '<option value="">Estación</option>';
+            estacionesUnicas.forEach(est => {
+                select.innerHTML += `<option value="${est}">${est}</option>`;
+            });
         }
 
         function abrirModalRegistro(id = null) {
-            document.getElementById('modal-registro').classList.add('show');
-            document.getElementById('reg-estacion').value = estacionActual;
-
-            let hoy = new Date().toISOString().split('T')[0];
-
+            document.getElementById('modal-reg-title').innerText = id ? 'Editar Registro' : 'Nuevo Registro';
+            document.getElementById('reg-id-edit').value = id || '';
+            document.getElementById('reg-estacion').value = estacionActual || '';
+            
             if (id) {
-                document.getElementById('modal-reg-title').innerText = 'Editar Registro';
                 let lista = registros[obraActualId] || [];
                 let reg = lista.find(r => r.id === id);
-                document.getElementById('reg-id-edit').value = reg.id;
-                document.getElementById('reg-item').value = reg.item;
-                document.getElementById('reg-descripcion').value = reg.descripcion;
-                document.getElementById('reg-cantidad').value = reg.cantidad;
-                document.getElementById('reg-fecha').value = reg.fecha;
-                document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
-                document.getElementById('reg-serie').value = reg.serie || '';
+                if (reg) {
+                    document.getElementById('reg-item').value = reg.item || '';
+                    document.getElementById('reg-descripcion').value = reg.descripcion || '';
+                    document.getElementById('reg-cantidad').value = reg.cantidad || 1;
+                    document.getElementById('reg-fecha').value = reg.fecha || new Date().toISOString().split('T')[0];
+                    document.getElementById('reg-ndescargo').value = reg.ndescargo || '';
+                    document.getElementById('reg-serie').value = reg.serie || '';
+                }
             } else {
-                document.getElementById('modal-reg-title').innerText = 'Nuevo Registro';
-                document.getElementById('reg-id-edit').value = '';
                 document.getElementById('reg-item').value = '';
                 document.getElementById('reg-descripcion').value = '';
                 document.getElementById('reg-cantidad').value = '1';
-                document.getElementById('reg-fecha').value = hoy;
+                document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
                 document.getElementById('reg-ndescargo').value = '';
                 document.getElementById('reg-serie').value = '';
             }
+            
+            document.getElementById('modal-registro').classList.add('show');
+            setTimeout(() => document.getElementById('reg-item').focus(), 100);
         }
 
-        function cerrarModalRegistro() { document.getElementById('modal-registro').classList.remove('show'); }
+        function cerrarModalRegistro() {
+            document.getElementById('modal-registro').classList.remove('show');
+        }
 
-        function autocompletarDescripcion(valor) {
-            let busqueda = valor.trim();
-            let encontrado = itemsMaster.find(i => i.item === busqueda);
+        function autocompletarDescripcion(valorItem) {
+            let codigo = valorItem.trim();
+            let encontrado = itemsMaster.find(i => i.item.toLowerCase() === codigo.toLowerCase());
             if (encontrado) {
                 document.getElementById('reg-descripcion').value = encontrado.desc;
             }
@@ -1603,17 +1719,19 @@
             let id = document.getElementById('reg-id-edit').value;
             let item = document.getElementById('reg-item').value.trim();
             let descripcion = document.getElementById('reg-descripcion').value.trim();
-            let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 1;
+            let cantidad = parseFloat(document.getElementById('reg-cantidad').value) || 0;
             let fecha = document.getElementById('reg-fecha').value;
             let ndescargo = document.getElementById('reg-ndescargo').value.trim();
             let serie = document.getElementById('reg-serie').value.trim();
 
-            if (!item || !fecha) {
-                alert('El código de ítem y la fecha son obligatorios');
+            if (!item || !cantidad || !fecha) {
+                alert('Los campos Ítem, Cantidad y Fecha son obligatorios.');
                 return;
             }
 
-            if (!registros[obraActualId]) registros[obraActualId] = [];
+            if (!registros[obraActualId]) {
+                registros[obraActualId] = [];
+            }
 
             if (id) {
                 let reg = registros[obraActualId].find(r => r.id == id);
@@ -1629,12 +1747,12 @@
                 let nuevoReg = {
                     id: Date.now(),
                     estacion: estacionActual,
-                    item,
-                    descripcion,
-                    cantidad,
-                    fecha,
-                    ndescargo,
-                    serie
+                    item: item,
+                    descripcion: descripcion,
+                    cantidad: cantidad,
+                    fecha: fecha,
+                    ndescargo: ndescargo,
+                    serie: serie
                 };
                 registros[obraActualId].push(nuevoReg);
             }
@@ -1644,8 +1762,6 @@
             renderizarRegistros();
         }
 
-        function editarRegistro(id) { abrirModalRegistro(id); }
-
         function eliminarRegistro(id) {
             if (confirm('¿Desea eliminar este registro?')) {
                 registros[obraActualId] = registros[obraActualId].filter(r => r.id !== id);
@@ -1654,221 +1770,185 @@
             }
         }
 
-        // --- CONSOLIDADO Y EXPORTACIONES ---
-        function abrirConsolidadoMateriales() {
-            let modal = document.getElementById('modal-consolidado');
-            let tbody = document.getElementById('tabla-consolidado-body');
+        let registroDragging = null;
+
+        function renderizarRegistros() {
+            let tbody = document.getElementById('tabla-registros-body');
             tbody.innerHTML = '';
-
             let lista = registros[obraActualId] || [];
-            let mapaConsolidado = {};
 
-            lista.forEach(r => {
-                if (!mapaConsolidado[r.item]) {
-                    mapaConsolidado[r.item] = { descripcion: r.descripcion, total: 0 };
-                }
-                mapaConsolidado[r.item].total += parseFloat(r.cantidad) || 0;
+            let filtroItem = document.getElementById('filtro-item-input').value.toLowerCase().trim();
+            let filtroEstacion = estacionActual;
+            let filtroFecha = document.getElementById('filtro-fecha-input').value;
+
+            let filtrados = lista.filter(reg => {
+                let matchEstacion = !filtroEstacion || reg.estacion === filtroEstacion;
+                let matchItem = !filtroItem || reg.item.toLowerCase().includes(filtroItem) || reg.descripcion.toLowerCase().includes(filtroItem);
+                let matchFecha = !filtroFecha || reg.fecha === filtroFecha;
+                return matchEstacion && matchItem && matchFecha;
             });
 
-            let keys = Object.keys(mapaConsolidado);
-            if (keys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #777;">No hay materiales registrados en esta obra.</td></tr>`;
-            } else {
-                keys.forEach(itemCode => {
-                    let itemData = mapaConsolidado[itemCode];
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="font-weight: bold; text-align: center;">${itemCode}</td>
-                        <td>${itemData.descripcion}</td>
-                        <td style="text-align: center; font-weight: bold;">${itemData.total}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-
-            modal.classList.add('show');
-        }
-
-        function cerrarConsolidadoMateriales() {
-            document.getElementById('modal-consolidado').classList.remove('show');
-        }
-
-        function exportarConsolidadoCSV() {
-            let obra = obras.find(o => o.id === obraActualId);
-            let lista = registros[obraActualId] || [];
-            let mapaConsolidado = {};
-
-            lista.forEach(r => {
-                if (!mapaConsolidado[r.item]) {
-                    mapaConsolidado[r.item] = { descripcion: r.descripcion, total: 0 };
-                }
-                mapaConsolidado[r.item].total += parseFloat(r.cantidad) || 0;
-            });
-
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "Ítem;Descripción;Cantidad Total\n";
-
-            Object.keys(mapaConsolidado).forEach(itemCode => {
-                let data = mapaConsolidado[itemCode];
-                let descClean = `"${data.descripcion.replace(/"/g, '""')}"`;
-                csvContent += `${itemCode};${descClean};${data.total}\n`;
-            });
-
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Consolidado_${obra.proyecto}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function exportarExcel(obraId) {
-            let obra = obras.find(o => o.id === obraId);
-            let lista = registros[obraId] || [];
-
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "Estación;Ítem;Descripción;Cantidad;Fecha;N. Descargo;Series\n";
-
-            lista.forEach(r => {
-                let descClean = `"${(r.descripcion || '').replace(/"/g, '""')}"`;
-                let serieClean = `"${(r.serie || '').replace(/"/g, '""')}"`;
-                csvContent += `${r.estacion};${r.item};${descClean};${r.cantidad};${r.fecha};${r.ndescargo || ''};${serieClean}\n`;
-            });
-
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Planilla_${obra.proyecto}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function abrirModalExportarObra() {
-            let select = document.getElementById('select-obra-exportar');
-            select.innerHTML = '';
-            obras.forEach(o => {
-                let opt = document.createElement('option');
-                opt.value = o.id;
-                opt.innerText = `${o.proyecto} (${o.circuito || 'Sin circuito'})`;
-                select.appendChild(opt);
-            });
-            document.getElementById('modal-exportar-obra').classList.add('show');
-        }
-
-        function cerrarModalExportarObra() { document.getElementById('modal-exportar-obra').classList.remove('show'); }
-
-        function ejecutarExportarObraSeleccionada() {
-            let obraId = document.getElementById('select-obra-exportar').value;
-            let obra = obras.find(o => o.id == obraId);
-            let regs = registros[obraId] || [];
-
-            let dataExport = { obra, registros: regs };
-            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataExport, null, 2));
-            let downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `Obra_${obra.proyecto}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            cerrarModalExportarObra();
-        }
-
-        function abrirModalExportarFecha() {
-            document.getElementById('input-fecha-exportar').value = new Date().toISOString().split('T')[0];
-            document.getElementById('modal-exportar-fecha').classList.add('show');
-        }
-
-        function cerrarModalExportarFecha() { document.getElementById('modal-exportar-fecha').classList.remove('show'); }
-
-        function ejecutarExportarInformePorFecha() {
-            let fechaSel = document.getElementById('input-fecha-exportar').value;
-            if (!fechaSel) { alert('Selecciona una fecha'); return; }
-
-            let registrosFiltrados = [];
-            Object.keys(registros).forEach(obraId => {
-                let obra = obras.find(o => o.id == obraId);
-                let lista = registros[obraId] || [];
-                lista.forEach(r => {
-                    if (r.fecha === fechaSel) {
-                        registrosFiltrados.push({
-                            proyecto: obra ? obra.proyecto : 'N/A',
-                            ...r
-                        });
-                    }
-                });
-            });
-
-            if (registrosFiltrados.length === 0) {
-                alert('No hay registros para la fecha seleccionada.');
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No hay registros en esta estación.</td></tr>`;
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "Proyecto;Estación;Ítem;Descripción;Cantidad;Fecha;N. Descargo;Series\n";
+            filtrados.forEach(reg => {
+                let itemStr = String(reg.item).trim();
+                let esMenorOIgualA3Cifras = itemStr.length <= 3;
 
-            registrosFiltrados.forEach(r => {
-                let descClean = `"${(r.descripcion || '').replace(/"/g, '""')}"`;
-                let serieClean = `"${(r.serie || '').replace(/"/g, '""')}"`;
-                csvContent += `${r.proyecto};${r.estacion};${r.item};${descClean};${r.cantidad};${r.fecha};${r.ndescargo || ''};${serieClean}\n`;
-            });
-
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Informe_Fecha_${fechaSel}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            cerrarModalExportarFecha();
-        }
-
-        function exportarTodoJSON() {
-            let backup = { obras, registros, itemsMaster };
-            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
-            let downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `Backup_PlanillaApp_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        function cargarObraJSON(event) {
-            let file = event.target.files[0];
-            if (!file) return;
-
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let contenido = JSON.parse(e.target.result);
-                    if (contenido.obra && contenido.registros) {
-                        let nuevaObra = contenido.obra;
-                        nuevaObra.id = Date.now(); // Evitar colisión de IDs
-                        obras.push(nuevaObra);
-                        registros[nuevaObra.id] = contenido.registros;
-                        guardarDatosLocal();
-                        renderizarObras();
-                        alert(`¡Obra "${nuevaObra.proyecto}" cargada con éxito!`);
-                    } else if (contenido.obras && contenido.registros) {
-                        // Respaldo total
-                        obras = contenido.obras;
-                        registros = contenido.registros;
-                        if (contenido.itemsMaster) itemsMaster = contenido.itemsMaster;
-                        guardarDatosLocal();
-                        renderizarObras();
-                        alert('¡Respaldo completo cargado con éxito!');
-                    } else {
-                        alert('Formato de archivo JSON no reconocido.');
-                    }
-                } catch (err) {
-                    alert('Error al leer el archivo JSON.');
-                    console.error(err);
+                let tr = document.createElement('tr');
+                tr.className = 'draggable-row';
+                if (esMenorOIgualA3Cifras) {
+                    tr.classList.add('highlight-green');
                 }
-            };
-            reader.readAsText(file);
-            event.target.value = ''; // Reset input
+                tr.draggable = true;
+
+                tr.ondragstart = (e) => {
+                    registroDragging = reg.id;
+                    e.dataTransfer.effectAllowed = 'move';
+                    tr.classList.add('dragging');
+                };
+                tr.ondragend = () => {
+                    tr.classList.remove('dragging');
+                    document.querySelectorAll('#tabla-registros-body tr').forEach(row => row.classList.remove('drag-over'));
+                };
+                tr.ondragover = (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                };
+                tr.ondragenter = () => tr.classList.add('drag-over');
+                tr.ondragleave = () => tr.classList.remove('drag-over');
+                tr.ondrop = (e) => {
+                    e.preventDefault();
+                    tr.classList.remove('drag-over');
+                    if (!registroDragging || registroDragging === reg.id) return;
+
+                    let listaCompleta = registros[obraActualId];
+                    let fromIdx = listaCompleta.findIndex(r => r.id === registroDragging);
+                    let toIdx = listaCompleta.findIndex(r => r.id === reg.id);
+
+                    if (fromIdx === -1 || toIdx === -1) return;
+
+                    let [movido] = listaCompleta.splice(fromIdx, 1);
+                    listaCompleta.splice(toIdx, 0, movido);
+
+                    registros[obraActualId] = listaCompleta;
+                    guardarDatosLocal();
+                    renderizarRegistros();
+                    registroDragging = null;
+                };
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="drag-handle" title="Mantener presionado para arrastrar"><i class="fa-solid fa-grip-vertical"></i></span>
+                        ${reg.estacion}
+                    </td>
+                    <td><strong>${reg.item}</strong></td>
+                    <td>${reg.descripcion}</td>
+                    <td>${reg.cantidad}</td>
+                    <td>${reg.fecha}</td>
+                    <td>${reg.ndescargo || ''}</td>
+                    <td>${reg.serie || ''}</td>
+                    <td>
+                        <button class="btn-edit" onclick="abrirModalRegistro(${reg.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filtro-item-input').value = '';
+            document.getElementById('filtro-fecha-input').value = '';
+            renderizarRegistros();
+        }
+
+        // --- GESTIÓN DE ÍTEMS MASTER ---
+        function renderizarItemsMaster(filtro = '') {
+            let tbody = document.getElementById('tabla-items-master');
+            tbody.innerHTML = '';
+            let filtrados = itemsMaster.filter(i => i.item.toLowerCase().includes(filtro.toLowerCase()) || i.desc.toLowerCase().includes(filtro.toLowerCase()));
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">No se encontraron ítems.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach(i => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${i.item}</strong></td>
+                    <td>${i.desc}</td>
+                    <td>
+                        <button class="btn-edit" onclick="abrirModalItemMaster('${i.item}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-delete" onclick="eliminarItemMaster('${i.item}')" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarItemsMaster() {
+            renderizarItemsMaster(document.getElementById('search-item-master').value);
+        }
+
+        function abrirModalItemMaster(itemCode = null) {
+            if (itemCode) {
+                let itemObj = itemsMaster.find(i => i.item === itemCode);
+                if (itemObj) {
+                    document.getElementById('item-original-id').value = itemObj.item;
+                    document.getElementById('master-item-code').value = itemObj.item;
+                    document.getElementById('master-item-desc').value = itemObj.desc;
+                }
+            } else {
+                document.getElementById('item-original-id').value = '';
+                document.getElementById('master-item-code').value = '';
+                document.getElementById('master-item-desc').value = '';
+            }
+            document.getElementById('modal-item-master').classList.add('show');
+        }
+
+        function cerrarModalItemMaster() {
+            document.getElementById('modal-item-master').classList.add('show'); // o remove class
+            document.getElementById('modal-item-master').classList.remove('show');
+        }
+
+        function guardarItemMaster() {
+            let originalId = document.getElementById('item-original-id').value;
+            let code = document.getElementById('master-item-code').value.trim();
+            let desc = document.getElementById('master-item-desc').value.trim();
+
+            if (!code || !desc) {
+                alert('El código y la descripción son obligatorios.');
+                return;
+            }
+
+            if (originalId) {
+                let idx = itemsMaster.findIndex(i => i.item === originalId);
+                if (idx !== -1) {
+                    itemsMaster[idx] = { item: code, desc: desc };
+                }
+            } else {
+                if (itemsMaster.some(i => i.item === code)) {
+                    alert('Ya existe un ítem con ese código.');
+                    return;
+                }
+                itemsMaster.push({ item: code, desc: desc });
+            }
+
+            guardarDatosLocal();
+            cerrarModalItemMaster();
+            renderizarItemsMaster();
+        }
+
+        function eliminarItemMaster(code) {
+            if (confirm(`¿Desea eliminar el ítem ${code} del listado maestro?`)) {
+                itemsMaster = itemsMaster.filter(i => i.item !== code);
+                guardarDatosLocal();
+                renderizarItemsMaster();
+            }
         }
     </script>
 </body>
