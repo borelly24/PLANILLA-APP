@@ -1,4 +1,4 @@
-const CACHE_NAME = 'planilla-app-v2'; // Incrementamos versión para forzar actualización
+const CACHE_NAME = 'planilla-app-v3'; // Incrementamos versión para forzar actualización
 
 const urlsToCache = [
   './',
